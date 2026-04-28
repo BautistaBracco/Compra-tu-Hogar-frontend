@@ -1,125 +1,86 @@
-import { getAuthHeaders, logout } from './auth';
+import axios from 'axios';
+import { logout, getToken } from './auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+// Crear instancia axios con baseURL y manejo de 401
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Adjuntar token automáticamente antes de cada request
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Manejar respuestas (especialmente 401)
+api.interceptors.response.use(
+  (resp) => resp,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      // Limpiar sesión y redirigir
+      try {
+        logout();
+      } catch (e) {
+        // noop
+      }
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 /**
- * Realiza una petición a la API
- * @param {string} endpoint - Endpoint de la API (ej: '/usuarios/1')
- * @param {Object} options - Opciones de fetch (method, body, etc.)
- * @returns {Promise<any>} - Respuesta JSON
- * @throws {Error} - Error en caso de fallo
+ * apiCall con axios
+ * @param {string} endpoint
+ * @param {{method?:string, data?:any, params?:object}} options
  */
 export async function apiCall(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-
-  const config = {
-    ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
-  };
-
   try {
-    const response = await fetch(url, config);
+    const method = (options.method || 'GET').toLowerCase();
+    const config = {
+      url: endpoint,
+      method,
+      data: options.body ?? options.data,
+      params: options.params,
+      headers: options.headers,
+    };
 
-    // Si recibimos 401 (Unauthorized), limpiar sesión
-    if (response.status === 401) {
-      logout();
-      window.location.href = '/login';
-      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
-    }
-
-    // Si no es 2xx, lanzar error
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        message: `Error HTTP ${response.status}`,
-      }));
-      throw new Error(error.message || `Error: ${response.status}`);
-    }
-
-    // Si la respuesta es 204 (No Content), retornar null
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
+    const res = await api.request(config);
+    // 204 -> null
+    if (res.status === 204) return null;
+    return res.data;
+  } catch (err) {
+    console.error('API Error:', err);
+    // Intentar extraer mensaje
+    const message = err?.response?.data?.message || err.message || 'Error en la petición API';
+    throw new Error(message);
   }
 }
 
-/**
- * GET - Obtener datos
- * @param {string} endpoint - Endpoint de la API
- * @param {Object} params - Parámetros de query
- * @returns {Promise<any>}
- */
 export function apiGet(endpoint, params = {}) {
-  const queryString = new URLSearchParams(params).toString();
-  const url = queryString ? `${endpoint}?${queryString}` : endpoint;
-
-  return apiCall(url, {
-    method: 'GET',
-  });
+  return apiCall(endpoint, { method: 'GET', params });
 }
 
-/**
- * POST - Crear datos
- * @param {string} endpoint - Endpoint de la API
- * @param {Object} data - Datos a enviar
- * @returns {Promise<any>}
- */
 export function apiPost(endpoint, data) {
-  return apiCall(endpoint, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return apiCall(endpoint, { method: 'POST', data });
 }
 
-/**
- * PUT - Actualizar datos
- * @param {string} endpoint - Endpoint de la API
- * @param {Object} data - Datos a enviar
- * @returns {Promise<any>}
- */
 export function apiPut(endpoint, data) {
-  return apiCall(endpoint, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return apiCall(endpoint, { method: 'PUT', data });
 }
 
-/**
- * DELETE - Eliminar datos
- * @param {string} endpoint - Endpoint de la API
- * @returns {Promise<null>}
- */
 export function apiDelete(endpoint) {
-  return apiCall(endpoint, {
-    method: 'DELETE',
-  });
+  return apiCall(endpoint, { method: 'DELETE' });
 }
 
-/**
- * PATCH - Actualización parcial
- * @param {string} endpoint - Endpoint de la API
- * @param {Object} data - Datos a enviar
- * @returns {Promise<any>}
- */
 export function apiPatch(endpoint, data) {
-  return apiCall(endpoint, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  });
+  return apiCall(endpoint, { method: 'PATCH', data });
 }
-
-// Ejemplos de uso:
-// ─────────────────────────────────────────────────
-// apiGet('/usuarios', { page: 0, size: 10 })
-// apiGet('/propiedades', { q: 'casa', tipo: 'departamento', precioMax: 100000 })
-// apiPost('/compradores/1/compras', { propiedadId: 42, inmobiliariaId: 5 })
-// apiPut('/usuarios/1', { nombre: 'Nuevo Nombre', mail: 'nuevo@mail.com' })
-// apiDelete('/usuarios/1')
-

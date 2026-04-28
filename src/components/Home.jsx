@@ -13,7 +13,6 @@ export function Home() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <div style={styles.logo}>
@@ -46,7 +45,6 @@ export function Home() {
         )}
       </header>
 
-      {/* Hero Section */}
       <section style={styles.hero}>
         <div style={styles.heroContent}>
           <h2 style={styles.heroTitle}>¡Bienvenido, {userName}!</h2>
@@ -57,7 +55,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section style={styles.statsSection}>
         <div style={styles.statsContainer}>
           <div style={styles.statCard}>
@@ -83,7 +80,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Featured Properties */}
       <section style={styles.featuredSection}>
         <h2 style={styles.sectionTitle}>Propiedades Destacadas</h2>
         <div style={styles.propertiesGrid}>
@@ -110,7 +106,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* User Info Banner */}
       <section style={styles.infoSection}>
         <div style={styles.infoBanner}>
           <h3 style={styles.infoBannerTitle}>Tu Perfil</h3>
@@ -126,7 +121,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer style={styles.footer}>
         <p style={styles.footerText}>
           © 2026 Compra Tu Hogar. Todos los derechos reservados.
@@ -237,7 +231,6 @@ const styles = {
     fontWeight: '600',
   },
 
-  // Hero Section
   hero: {
     background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
     color: 'white',
@@ -271,7 +264,6 @@ const styles = {
     cursor: 'pointer',
   },
 
-  // Stats Section
   statsSection: {
     padding: '60px 20px',
     backgroundColor: 'white',
@@ -306,7 +298,6 @@ const styles = {
     margin: '0',
   },
 
-  // Featured Section
   featuredSection: {
     padding: '60px 20px',
     maxWidth: '1200px',
@@ -390,7 +381,6 @@ const styles = {
     fontWeight: '600',
   },
 
-  // Info Section
   infoSection: {
     padding: '40px 20px',
     backgroundColor: 'white',
@@ -416,7 +406,6 @@ const styles = {
     margin: '0 0 8px 0',
   },
 
-  // Footer
   footer: {
     backgroundColor: '#222',
     color: 'white',
