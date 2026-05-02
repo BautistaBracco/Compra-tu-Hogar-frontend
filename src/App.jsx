@@ -5,6 +5,8 @@ import { Home } from "./components/Home";
 import { Landing } from "./components/Landing";
 import { AdminPanel } from "./components/AdminPanel";
 import { InmobiliariaPanel } from "./components/InmobiliariaPanel";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicRoute } from "./components/PublicRoute";
 import "./styles/components/dashboard.css";
 import { useState } from "react";
 import axios from 'axios';
@@ -69,11 +71,46 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/landing" element={<Landing />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/inmobiliaria" element={<InmobiliariaPanel />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles="administrador">
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inmobiliaria"
+          element={
+            <ProtectedRoute allowedRoles="inmobiliaria">
+              <InmobiliariaPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,4 +1,8 @@
+import { isAuthenticated } from '../auth';
+
 export function Landing() {
+  const authAwarePath = (path) => (isAuthenticated() ? '/home' : path);
+
   return (
     <div style={styles.container}>
       {/* Header */}
@@ -8,8 +12,8 @@ export function Landing() {
             <h1 style={styles.logoText}>🏠 Compra Tu Hogar</h1>
           </div>
           <div style={styles.headerBtns}>
-            <a href="/login" style={styles.loginLink}>Iniciar Sesión</a>
-            <a href="/register" style={styles.registerBtn}>Registrarse</a>
+            <a href={authAwarePath('/login')} style={styles.loginLink}>Iniciar Sesión</a>
+            <a href={authAwarePath('/register')} style={styles.registerBtn}>Registrarse</a>
           </div>
         </div>
       </header>
@@ -22,7 +26,7 @@ export function Landing() {
             Descubre miles de propiedades y realiza tu compra de manera segura y confiable
           </p>
           <div style={styles.heroBtns}>
-            <a href="/register" style={styles.heroBtn}>Comenzar Ahora</a>
+            <a href={authAwarePath('/register')} style={styles.heroBtn}>Comenzar Ahora</a>
             <a href="#features" style={styles.heroSecondaryBtn}>Saber Más</a>
           </div>
         </div>
@@ -106,7 +110,7 @@ export function Landing() {
           <p style={styles.ctaText}>
             Únete a miles de usuarios que ya encontraron su hogar ideal
           </p>
-          <a href="/register" style={styles.ctaBtn}>Crear Cuenta Gratis</a>
+          <a href={authAwarePath('/register')} style={styles.ctaBtn}>Crear Cuenta Gratis</a>
         </div>
       </section>
 

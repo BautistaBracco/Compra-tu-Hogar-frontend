@@ -14,16 +14,8 @@ export function Login() {
     setError('');
 
     try {
-      const response = await login(mail, password);
-      const userRole = String(response?.rol || response?.usuario?.rol || '').toLowerCase();
-
-      if (userRole === 'admin' || userRole === 'administrador') {
-        window.location.href = '/admin';
-      } else if (userRole === 'comprador') {
-        window.location.href = '/home';
-      } else if (userRole === 'inmobiliaria') {
-        window.location.href = '/inmobiliaria';
-      }
+      await login(mail, password);
+      window.location.href = '/home';
     } catch (err) {
       setError(err.message || 'Error en la autenticación');
     } finally {

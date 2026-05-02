@@ -43,7 +43,16 @@ export async function login(email, password) {
     return data;
   } catch (err) {
     console.error('Error en login:', err);
-    const message = err?.response?.data?.message || err.message || 'Error en la autenticación';
+    const status = err?.response?.status;
+    const backendMessage = String(err?.response?.data?.message || '').trim();
+    const isGenericInternalError = backendMessage.toLowerCase().includes('error interno');
+
+    let message = backendMessage || err.message || 'Error en la autenticación';
+
+    if (status === 401 || status === 403 || isGenericInternalError) {
+      message = 'Correo o contraseña incorrectos';
+    }
+
     throw new Error(message);
   }
 }
@@ -106,4 +115,3 @@ export function hasRole(roles) {
   if (Array.isArray(roles)) return roles.includes(userRole);
   return userRole === roles;
 }
-

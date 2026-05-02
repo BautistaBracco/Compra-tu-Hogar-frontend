@@ -11,6 +11,15 @@ export function Home() {
     window.location.href = '/login';
   };
 
+  const isAdmin = userRole === 'administrador';
+  const isInmobiliaria = userRole === 'inmobiliaria';
+
+  const getRoleLabel = () => {
+    if (isAdmin) return '👑 Administrador';
+    if (isInmobiliaria) return '🏢 Inmobiliaria';
+    return '👤 Comprador';
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -22,6 +31,12 @@ export function Home() {
             <a href="#" style={styles.navLink}>Propiedades</a>
             <a href="#" style={styles.navLink}>Favoritos</a>
             <a href="#" style={styles.navLink}>Mi Perfil</a>
+            {isAdmin && (
+              <a href="/admin" style={styles.navPanelBtn}>Panel Admin</a>
+            )}
+            {isInmobiliaria && (
+              <a href="/inmobiliaria" style={styles.navPanelBtn}>Panel Inmobiliaria</a>
+            )}
             <button style={styles.logoutBtn} onClick={handleLogout}>
               Cerrar Sesión
             </button>
@@ -38,6 +53,12 @@ export function Home() {
             <a href="#" style={styles.mobileLink}>Propiedades</a>
             <a href="#" style={styles.mobileLink}>Favoritos</a>
             <a href="#" style={styles.mobileLink}>Mi Perfil</a>
+            {isAdmin && (
+              <a href="/admin" style={styles.mobilePanelBtn}>Panel Admin</a>
+            )}
+            {isInmobiliaria && (
+              <a href="/inmobiliaria" style={styles.mobilePanelBtn}>Panel Inmobiliaria</a>
+            )}
             <button style={styles.mobileLogoutBtn} onClick={handleLogout}>
               Cerrar Sesión
             </button>
@@ -113,7 +134,7 @@ export function Home() {
             <strong>Nombre:</strong> {userName}
           </p>
           <p style={styles.infoBannerText}>
-            <strong>Rol:</strong> {userRole === 'comprador' ? '👤 Comprador' : '🏢 Inmobiliaria'}
+            <strong>Rol:</strong> {getRoleLabel()}
           </p>
           <p style={styles.infoBannerText}>
             <strong>Estado:</strong> ✅ Verificado
@@ -262,6 +283,27 @@ const styles = {
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
+  },
+  navPanelBtn: {
+    textDecoration: 'none',
+    color: 'white',
+    fontWeight: '700',
+    backgroundColor: '#28a745',
+    padding: '10px 16px',
+    fontSize: '13px',
+    borderRadius: '6px',
+    display: 'inline-block',
+  },
+  mobilePanelBtn: {
+    padding: '12px 16px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    textDecoration: 'none',
+    display: 'inline-block',
   },
 
   statsSection: {
