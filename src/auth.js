@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:8080/api/v1' || 'http://localhost:8080';
 
 const TOKEN_KEY = 'auth_token';
 const USER_ROLE_KEY = 'user_role';
@@ -60,7 +60,7 @@ export async function login(email, password) {
 export async function register(nombre, email, password) {
   try {
     const payload = {
-      name: nombre,
+      nombre,
       email,
       password,
     };
