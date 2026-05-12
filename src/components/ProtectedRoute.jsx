@@ -13,6 +13,3 @@ export function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
-
-
-

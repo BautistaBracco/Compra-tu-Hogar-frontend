@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { Login } from "./components/Login";
 import { Register } from "./components/Register";
 import { Home } from "./components/Home";
@@ -20,7 +20,7 @@ function Dashboard() {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.get('http://localhost:8080/health');
+      const res = await axios.get('http://localhost:8080/api/v1/health');
       setStatus(res.data);
     } catch (err) {
       setError(err.message);
@@ -69,7 +69,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/landing" replace />} />
+        <Route path="/status" element={<Dashboard />} />
         <Route path="/landing" element={<Landing />} />
         <Route
           path="/home"

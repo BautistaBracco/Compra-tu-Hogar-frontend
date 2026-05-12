@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { register } from '../auth';
+import { login, register } from '../auth';
 import '../styles/components/register.css';
 
 export function Register() {
@@ -41,11 +41,10 @@ export function Register() {
     try {
       const data = await register(nombre, email, password);
       setSuccess(
-          `¡Registro exitoso! Bienvenido, ${data.nombre || 'Usuario'}. Redirigiendo al login...`
+          `¡Registro exitoso! Bienvenido, ${data.nombre || 'Usuario'}. Iniciando sesión...`
       );
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
+      await login(email, password);
+      window.location.href = '/home';
     } catch (err) {
       setError(err.message || 'Error en el registro. Por favor, intenta de nuevo.');
       console.error('Error de registro:', err);
