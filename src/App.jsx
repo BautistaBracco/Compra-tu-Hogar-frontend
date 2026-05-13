@@ -13,20 +13,23 @@ import { useState } from "react";
 import axios from 'axios';
 
 function Dashboard() {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [healthState, setHealthState] = useState({
+    status: null,
+    loading: false,
+    error: "",
+  });
+
+  const { status, loading, error } = healthState;
 
   const checkHealth = async () => {
-    setLoading(true);
-    setError("");
+    setHealthState((prev) => ({ ...prev, loading: true, error: "" }));
     try {
       const res = await axios.get('http://localhost:8080/api/v1/health');
-      setStatus(res.data);
+      setHealthState((prev) => ({ ...prev, status: res.data }));
     } catch (err) {
-      setError(err.message);
+      setHealthState((prev) => ({ ...prev, error: err.message }));
     } finally {
-      setLoading(false);
+      setHealthState((prev) => ({ ...prev, loading: false }));
     }
   };
 

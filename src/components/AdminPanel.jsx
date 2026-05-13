@@ -2,25 +2,33 @@ import { useState, useEffect } from 'react';
 import { logout, crearInmobiliaria, obtenerInmobiliarias, crearCaracteristica, obtenerCaracteristicas } from '../auth';
 import '../styles/components/admin.css';
 
+const initialInmobiliariaFormState = {
+  nombre: '',
+  email: '',
+  password: '',
+  loading: false,
+  error: '',
+  success: '',
+};
+
+const initialCaracteristicaFormState = {
+  nombre: '',
+  descripcion: '',
+  loading: false,
+  error: '',
+  success: '',
+};
+
 export function AdminPanel() {
   const [activeTab, setActiveTab] = useState('inicio');
 
   // Inmobiliarias
   const [inmobiliarias, setInmobiliarias] = useState([]);
-  const [nombreInmob, setNombreInmob] = useState('');
-  const [emailInmob, setEmailInmob] = useState('');
-  const [passwordInmob, setPasswordInmob] = useState('');
-  const [loadingInmob, setLoadingInmob] = useState(false);
-  const [errorInmob, setErrorInmob] = useState('');
-  const [successInmob, setSuccessInmob] = useState('');
+  const [inmobiliariaForm, setInmobiliariaForm] = useState(initialInmobiliariaFormState);
 
   // Características
   const [caracteristicas, setCaracteristicas] = useState([]);
-  const [nombreCarac, setNombreCarac] = useState('');
-  const [descripcionCarac, setDescripcionCarac] = useState('');
-  const [loadingCarac, setLoadingCarac] = useState(false);
-  const [errorCarac, setErrorCarac] = useState('');
-  const [successCarac, setSuccessCarac] = useState('');
+  const [caracteristicaForm, setCaracteristicaForm] = useState(initialCaracteristicaFormState);
 
   // Cargar inmobiliarias al montar
   useEffect(() => {
@@ -48,10 +56,10 @@ export function AdminPanel() {
     try {
       const data = await obtenerInmobiliarias();
       setInmobiliarias(data.content || data || []);
-      setErrorInmob('');
+      setInmobiliariaForm((prev) => ({ ...prev, error: '' }));
     } catch (err) {
       console.error('Error completo:', err);
-      setErrorInmob(`Error: ${err.message}`);
+      setInmobiliariaForm((prev) => ({ ...prev, error: `Error: ${err.message}` }));
     }
   };
 
@@ -59,71 +67,72 @@ export function AdminPanel() {
     try {
       const data = await obtenerCaracteristicas();
       setCaracteristicas(Array.isArray(data) ? data : data.content || []);
-      setErrorCarac('');
+      setCaracteristicaForm((prev) => ({ ...prev, error: '' }));
     } catch (err) {
       console.error('Error completo:', err);
-      setErrorCarac(`Error: ${err.message}`);
+      setCaracteristicaForm((prev) => ({ ...prev, error: `Error: ${err.message}` }));
     }
   };
 
   const handleCrearInmobiliaria = async (e) => {
     e.preventDefault();
-    setErrorInmob('');
-    setSuccessInmob('');
+    setInmobiliariaForm((prev) => ({ ...prev, error: '', success: '' }));
 
-    if (!nombreInmob.trim()) {
-      setErrorInmob('El nombre es requerido');
+    if (!inmobiliariaForm.nombre.trim()) {
+      setInmobiliariaForm((prev) => ({ ...prev, error: 'El nombre es requerido' }));
       return;
     }
 
-    if (!emailInmob.trim()) {
-      setErrorInmob('El email es requerido');
+    if (!inmobiliariaForm.email.trim()) {
+      setInmobiliariaForm((prev) => ({ ...prev, error: 'El email es requerido' }));
       return;
     }
 
-    if (passwordInmob.length < 8) {
-      setErrorInmob('La contraseña debe tener mínimo 8 caracteres');
+    if (inmobiliariaForm.password.length < 8) {
+      setInmobiliariaForm((prev) => ({ ...prev, error: 'La contraseña debe tener mínimo 8 caracteres' }));
       return;
     }
 
-    setLoadingInmob(true);
+    setInmobiliariaForm((prev) => ({ ...prev, loading: true, error: '', success: '' }));
 
     try {
-      await crearInmobiliaria(nombreInmob, emailInmob, passwordInmob);
-      setSuccessInmob('¡Inmobiliaria creada exitosamente!');
-      setNombreInmob('');
-      setEmailInmob('');
-      setPasswordInmob('');
+      await crearInmobiliaria(inmobiliariaForm.nombre, inmobiliariaForm.email, inmobiliariaForm.password);
+      setInmobiliariaForm({ ...initialInmobiliariaFormState, success: '¡Inmobiliaria creada exitosamente!' });
       await cargarInmobiliarias();
     } catch (err) {
-      setErrorInmob(err.message || 'Error al crear la inmobiliaria');
+      setInmobiliariaForm((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Error al crear la inmobiliaria',
+      }));
     } finally {
-      setLoadingInmob(false);
+      setInmobiliariaForm((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleCrearCaracteristica = async (e) => {
     e.preventDefault();
-    setErrorCarac('');
-    setSuccessCarac('');
+    setCaracteristicaForm((prev) => ({ ...prev, error: '', success: '' }));
 
-    if (!nombreCarac.trim()) {
-      setErrorCarac('El nombre es requerido');
+    if (!caracteristicaForm.nombre.trim()) {
+      setCaracteristicaForm((prev) => ({ ...prev, error: 'El nombre es requerido' }));
       return;
     }
 
-    setLoadingCarac(true);
+    setCaracteristicaForm((prev) => ({ ...prev, loading: true, error: '', success: '' }));
 
     try {
-      await crearCaracteristica(nombreCarac, descripcionCarac);
-      setSuccessCarac('¡Característica creada exitosamente!');
-      setNombreCarac('');
-      setDescripcionCarac('');
+      await crearCaracteristica(caracteristicaForm.nombre, caracteristicaForm.descripcion);
+      setCaracteristicaForm({ ...initialCaracteristicaFormState, success: '¡Característica creada exitosamente!' });
       await cargarCaracteristicas();
     } catch (err) {
-      setErrorCarac(err.message || 'Error al crear la característica');
+      setCaracteristicaForm((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Error al crear la característica',
+      }));
     } finally {
-      setLoadingCarac(false);
+      setCaracteristicaForm((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -203,8 +212,8 @@ export function AdminPanel() {
                   <input
                     id="nombre-inmob"
                     type="text"
-                    value={nombreInmob}
-                    onChange={(e) => setNombreInmob(e.target.value)}
+                    value={inmobiliariaForm.nombre}
+                    onChange={(e) => setInmobiliariaForm((prev) => ({ ...prev, nombre: e.target.value }))}
                     placeholder="RE/MAX Norte"
                     required
                     className="form-input"
@@ -218,8 +227,8 @@ export function AdminPanel() {
                   <input
                     id="email-inmob"
                     type="email"
-                    value={emailInmob}
-                    onChange={(e) => setEmailInmob(e.target.value)}
+                    value={inmobiliariaForm.email}
+                    onChange={(e) => setInmobiliariaForm((prev) => ({ ...prev, email: e.target.value }))}
                     placeholder="inmobiliaria@email.com"
                     required
                     className="form-input"
@@ -233,8 +242,8 @@ export function AdminPanel() {
                   <input
                     id="password-inmob"
                     type="password"
-                    value={passwordInmob}
-                    onChange={(e) => setPasswordInmob(e.target.value)}
+                    value={inmobiliariaForm.password}
+                    onChange={(e) => setInmobiliariaForm((prev) => ({ ...prev, password: e.target.value }))}
                     placeholder="Mínimo 8 caracteres"
                     required
                     minLength="8"
@@ -242,15 +251,15 @@ export function AdminPanel() {
                   />
                 </div>
 
-                {errorInmob && <div className="form-error">{errorInmob}</div>}
-                {successInmob && <div className="form-success">{successInmob}</div>}
+                {inmobiliariaForm.error && <div className="form-error">{inmobiliariaForm.error}</div>}
+                {inmobiliariaForm.success && <div className="form-success">{inmobiliariaForm.success}</div>}
 
                 <button
                   type="submit"
-                  disabled={loadingInmob}
+                  disabled={inmobiliariaForm.loading}
                   className="admin-button"
                 >
-                  {loadingInmob ? 'Creando...' : 'Crear Inmobiliaria'}
+                  {inmobiliariaForm.loading ? 'Creando...' : 'Crear Inmobiliaria'}
                 </button>
               </form>
             </div>
@@ -297,8 +306,8 @@ export function AdminPanel() {
                   <input
                     id="nombre-carac"
                     type="text"
-                    value={nombreCarac}
-                    onChange={(e) => setNombreCarac(e.target.value)}
+                    value={caracteristicaForm.nombre}
+                    onChange={(e) => setCaracteristicaForm((prev) => ({ ...prev, nombre: e.target.value }))}
                     placeholder="ej: Parrilla, Piscina, Garaje"
                     required
                     className="form-input"
@@ -311,23 +320,23 @@ export function AdminPanel() {
                   </label>
                   <textarea
                     id="descripcion-carac"
-                    value={descripcionCarac}
-                    onChange={(e) => setDescripcionCarac(e.target.value)}
+                    value={caracteristicaForm.descripcion}
+                    onChange={(e) => setCaracteristicaForm((prev) => ({ ...prev, descripcion: e.target.value }))}
                     placeholder="Describe esta característica"
                     className="form-input"
                     rows="3"
                   />
                 </div>
 
-                {errorCarac && <div className="form-error">{errorCarac}</div>}
-                {successCarac && <div className="form-success">{successCarac}</div>}
+                {caracteristicaForm.error && <div className="form-error">{caracteristicaForm.error}</div>}
+                {caracteristicaForm.success && <div className="form-success">{caracteristicaForm.success}</div>}
 
                 <button
                   type="submit"
-                  disabled={loadingCarac}
+                  disabled={caracteristicaForm.loading}
                   className="admin-button"
                 >
-                  {loadingCarac ? 'Creando...' : 'Crear Característica'}
+                  {caracteristicaForm.loading ? 'Creando...' : 'Crear Característica'}
                 </button>
               </form>
             </div>

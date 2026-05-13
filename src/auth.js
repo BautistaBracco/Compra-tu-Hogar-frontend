@@ -188,16 +188,6 @@ export async function uploadUserImage(file) {
       },
     });
 
-    const imageUrl = res?.data?.url;
-    const usuario = res?.data?.usuario;
-    if (usuario) {
-      if (usuario.email) localStorage.setItem(USER_EMAIL_KEY, usuario.email);
-      if (usuario.nombre) localStorage.setItem(USER_NAME_KEY, usuario.nombre);
-      if (usuario.icono) setUserIcon(usuario.icono);
-    } else if (imageUrl) {
-      setUserIcon(imageUrl);
-    }
-
     return res.data;
   } catch (err) {
     console.error('Error al subir imagen de perfil:', err);
@@ -218,6 +208,30 @@ export async function uploadUserImage(file) {
     }
 
     const message = backendMessage || err.message || 'Error al subir la imagen';
+    throw new Error(message);
+  }
+}
+
+export async function updateUserProfile(payload) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.patch('/usuarios/perfil', payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const usuario = res?.data;
+    if (usuario?.nombre) localStorage.setItem(USER_NAME_KEY, usuario.nombre);
+    if (usuario?.email) localStorage.setItem(USER_EMAIL_KEY, usuario.email);
+    if (Object.prototype.hasOwnProperty.call(usuario || {}, 'icono')) {
+      setUserIcon(usuario.icono);
+    }
+
+    return usuario;
+  } catch (err) {
+    console.error('Error al actualizar perfil:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al actualizar el perfil';
     throw new Error(message);
   }
 }

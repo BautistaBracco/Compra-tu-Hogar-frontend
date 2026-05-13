@@ -7,6 +7,7 @@ import {
   getUserRole,
   logout,
   uploadUserImage,
+  updateUserProfile,
 } from '../auth';
 
 function getRoleLabel(userRole) {
@@ -21,13 +22,25 @@ export function MiPerfil() {
   const userId = getUserId() || 'N/A';
   const userEmail = getUserEmail() || 'Sin email disponible';
 
-  const [avatarUrl, setAvatarUrl] = useState(getUserIcon() || '');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [avatarLoadError, setAvatarLoadError] = useState(false);
+  const [profileState, setProfileState] = useState({
+    avatarUrl: getUserIcon() || '',
+    selectedFile: null,
+    previewUrl: '',
+    uploading: false,
+    error: '',
+    success: '',
+    avatarLoadError: false,
+  });
+
+  const {
+    avatarUrl,
+    selectedFile,
+    previewUrl,
+    uploading,
+    error,
+    success,
+    avatarLoadError,
+  } = profileState;
 
   const currentAvatar = useMemo(() => previewUrl || avatarUrl, [previewUrl, avatarUrl]);
 
@@ -38,7 +51,7 @@ export function MiPerfil() {
   }, [previewUrl]);
 
   useEffect(() => {
-    setAvatarLoadError(false);
+    setProfileState((prev) => ({ ...prev, avatarLoadError: false }));
   }, [currentAvatar]);
 
   const handleLogout = () => {
@@ -48,62 +61,90 @@ export function MiPerfil() {
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
-    setError('');
-    setSuccess('');
+    setProfileState((prev) => ({ ...prev, error: '', success: '' }));
 
     if (!file) {
-      setSelectedFile(null);
-      setPreviewUrl('');
+      setProfileState((prev) => ({ ...prev, selectedFile: null, previewUrl: '' }));
       return;
     }
 
     if (!(file instanceof File)) {
-      setError('No se pudo leer el archivo seleccionado.');
-      setSelectedFile(null);
-      setPreviewUrl('');
+      setProfileState((prev) => ({
+        ...prev,
+        error: 'No se pudo leer el archivo seleccionado.',
+        selectedFile: null,
+        previewUrl: '',
+      }));
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      setError('Solo puedes subir archivos de imagen.');
-      setSelectedFile(null);
-      setPreviewUrl('');
+      setProfileState((prev) => ({
+        ...prev,
+        error: 'Solo puedes subir archivos de imagen.',
+        selectedFile: null,
+        previewUrl: '',
+      }));
       return;
     }
 
     const maxSizeMb = 5;
     if (file.size > maxSizeMb * 1024 * 1024) {
-      setError('La imagen no puede superar los 5MB.');
-      setSelectedFile(null);
-      setPreviewUrl('');
+      setProfileState((prev) => ({
+        ...prev,
+        error: 'La imagen no puede superar los 5MB.',
+        selectedFile: null,
+        previewUrl: '',
+      }));
       return;
     }
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    setProfileState((prev) => ({
+      ...prev,
+      selectedFile: file,
+      previewUrl: URL.createObjectURL(file),
+    }));
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Selecciona una imagen antes de subirla.');
+      setProfileState((prev) => ({ ...prev, error: 'Selecciona una imagen antes de subirla.' }));
       return;
     }
 
-    setUploading(true);
-    setError('');
-    setSuccess('');
+    setProfileState((prev) => ({ ...prev, uploading: true, error: '', success: '' }));
 
     try {
       const response = await uploadUserImage(selectedFile);
       const savedUrl = response?.url || '';
-      setAvatarUrl(getUserIcon() || savedUrl);
-      setSelectedFile(null);
-      setPreviewUrl('');
-      setSuccess('Foto de perfil actualizada correctamente.');
+
+      if (!savedUrl) {
+        setProfileState((prev) => ({
+          ...prev,
+          uploading: false,
+          error: 'El servidor no devolvió la URL de la imagen.',
+        }));
+        return;
+      }
+
+      const updatedUser = await updateUserProfile({ icono: savedUrl });
+      const finalAvatar = getUserIcon() || updatedUser?.icono || savedUrl;
+
+      setProfileState((prev) => ({
+        ...prev,
+        avatarUrl: finalAvatar,
+        selectedFile: null,
+        previewUrl: '',
+        avatarLoadError: false,
+        success: 'Foto de perfil actualizada correctamente.',
+      }));
     } catch (uploadError) {
-      setError(uploadError.message || 'No se pudo subir la imagen.');
+      setProfileState((prev) => ({
+        ...prev,
+        error: uploadError.message || 'No se pudo subir la imagen.',
+      }));
     } finally {
-      setUploading(false);
+      setProfileState((prev) => ({ ...prev, uploading: false }));
     }
   };
 
@@ -130,7 +171,7 @@ export function MiPerfil() {
                 src={currentAvatar}
                 alt={`Foto de perfil de ${userName}`}
                 className="profile-avatar"
-                onError={() => setAvatarLoadError(true)}
+                onError={() => setProfileState((prev) => ({ ...prev, avatarLoadError: true }))}
               />
             ) : (
               <div className="profile-avatar-placeholder">{userName.charAt(0).toUpperCase()}</div>
