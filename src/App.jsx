@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { Login } from "./components/Login";
 import { Register } from "./components/Register";
 import { Home } from "./components/Home";
+import { MiPerfil } from "./components/MiPerfil";
 import { Landing } from "./components/Landing";
 import { AdminPanel } from "./components/AdminPanel";
 import { InmobiliariaPanel } from "./components/InmobiliariaPanel";
@@ -77,6 +78,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mi-perfil"
+          element={
+            <ProtectedRoute>
+              <MiPerfil />
             </ProtectedRoute>
           }
         />

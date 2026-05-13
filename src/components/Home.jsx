@@ -23,12 +23,6 @@ export function Home() {
   const isAdmin = userRole === 'administrador';
   const isInmobiliaria = userRole === 'inmobiliaria';
 
-  const getRoleLabel = () => {
-    if (isAdmin) return '👑 Administrador';
-    if (isInmobiliaria) return '🏢 Inmobiliaria';
-    return '👤 Comprador';
-  };
-
   return (
     <div className="home-container">
       <header className="home-header">
@@ -40,7 +34,7 @@ export function Home() {
           <nav className="home-nav" aria-label="Navegación principal">
             <a href="#" className="home-nav-link">Propiedades</a>
             <a href="#" className="home-nav-link">Favoritos</a>
-            <a href="#" className="home-nav-link">Mi Perfil</a>
+            <a href="/mi-perfil" className="home-nav-link">Mi Perfil</a>
             {isAdmin && <a href="/admin" className="home-nav-link home-panel-link">Panel Admin</a>}
             {isInmobiliaria && <a href="/inmobiliaria" className="home-nav-link home-panel-link">Panel Inmobiliaria</a>}
             <button type="button" className="home-logout-btn" onClick={handleLogout}>
@@ -62,7 +56,7 @@ export function Home() {
         <div className={`home-mobile-menu ${isMenuOpen ? 'active' : ''}`}>
           <a href="#" className="home-mobile-link">Propiedades</a>
           <a href="#" className="home-mobile-link">Favoritos</a>
-          <a href="#" className="home-mobile-link">Mi Perfil</a>
+          <a href="/mi-perfil" className="home-mobile-link">Mi Perfil</a>
           {isAdmin && <a href="/admin" className="home-mobile-link home-mobile-panel-link">Panel Admin</a>}
           {isInmobiliaria && <a href="/inmobiliaria" className="home-mobile-link home-mobile-panel-link">Panel Inmobiliaria</a>}
           <button type="button" className="home-mobile-logout" onClick={handleLogout}>
@@ -112,15 +106,6 @@ export function Home() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="home-info-section">
-        <div className="home-info-banner">
-          <h3 className="home-info-banner-title">Tu Perfil</h3>
-          <p className="home-info-banner-text"><strong>Nombre:</strong> {userName}</p>
-          <p className="home-info-banner-text"><strong>Rol:</strong> {getRoleLabel()}</p>
-          <p className="home-info-banner-text"><strong>Estado:</strong> ✅ Verificado</p>
         </div>
       </section>
 

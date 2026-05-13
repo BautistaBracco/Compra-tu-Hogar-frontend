@@ -6,6 +6,42 @@ const TOKEN_KEY = 'auth_token';
 const USER_ROLE_KEY = 'user_role';
 const USER_ID_KEY = 'user_id';
 const USER_NAME_KEY = 'user_name';
+const USER_EMAIL_KEY = 'user_email';
+const USER_ICON_KEY = 'user_icon';
+
+function decodeJwtPayload(token) {
+  try {
+    if (!token || !token.includes('.')) return null;
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join(''),
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeIconUrl(iconUrl) {
+  const value = String(iconUrl || '').trim();
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+
+  if (value.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${value}`;
+  }
+
+  if (value.startsWith('uploads/')) {
+    return `${API_BASE_URL}/${value}`;
+  }
+
+  return value;
+}
 
 function normalizeRole(role) {
   const value = String(role || '').trim().toLowerCase();
@@ -27,7 +63,7 @@ function normalizeRole(role) {
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {},
 });
 
 export async function login(email, password) {
@@ -39,6 +75,10 @@ export async function login(email, password) {
     if (data.rol) localStorage.setItem(USER_ROLE_KEY, normalizeRole(data.rol));
     if (data.id) localStorage.setItem(USER_ID_KEY, String(data.id));
     if (data.nombre) localStorage.setItem(USER_NAME_KEY, data.nombre);
+    if (data.email) localStorage.setItem(USER_EMAIL_KEY, data.email);
+    else if (email) localStorage.setItem(USER_EMAIL_KEY, email);
+
+    if (data.icono) setUserIcon(data.icono);
 
     return data;
   } catch (err) {
@@ -90,6 +130,35 @@ export function getUserName() {
   return localStorage.getItem(USER_NAME_KEY);
 }
 
+export function getUserEmail() {
+  const storedEmail = localStorage.getItem(USER_EMAIL_KEY);
+  if (storedEmail) return storedEmail;
+
+  const token = getToken();
+  const payload = decodeJwtPayload(token);
+  const tokenEmail = payload?.sub;
+
+  if (tokenEmail) {
+    localStorage.setItem(USER_EMAIL_KEY, tokenEmail);
+    return tokenEmail;
+  }
+
+  return null;
+}
+
+export function getUserIcon() {
+  return normalizeIconUrl(localStorage.getItem(USER_ICON_KEY));
+}
+
+export function setUserIcon(iconUrl) {
+  if (!iconUrl) {
+    localStorage.removeItem(USER_ICON_KEY);
+    return;
+  }
+
+  localStorage.setItem(USER_ICON_KEY, normalizeIconUrl(iconUrl));
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -99,6 +168,58 @@ export function logout() {
   localStorage.removeItem(USER_ROLE_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(USER_NAME_KEY);
+  localStorage.removeItem(USER_EMAIL_KEY);
+  localStorage.removeItem(USER_ICON_KEY);
+}
+
+export async function uploadUserImage(file) {
+  try {
+    if (!(file instanceof File)) {
+      throw new Error('Archivo inválido. Selecciona una imagen nuevamente.');
+    }
+
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    const res = await axios.post(`${API_BASE_URL}/usuarios/imagen`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const imageUrl = res?.data?.url;
+    const usuario = res?.data?.usuario;
+    if (usuario) {
+      if (usuario.email) localStorage.setItem(USER_EMAIL_KEY, usuario.email);
+      if (usuario.nombre) localStorage.setItem(USER_NAME_KEY, usuario.nombre);
+      if (usuario.icono) setUserIcon(usuario.icono);
+    } else if (imageUrl) {
+      setUserIcon(imageUrl);
+    }
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al subir imagen de perfil:', err);
+    const status = err?.response?.status;
+    const code = err?.response?.data?.code;
+    const backendMessage = err?.response?.data?.message;
+
+    if (status === 413) {
+      throw new Error('La imagen es demasiado grande para el servidor.');
+    }
+
+    if (status === 400) {
+      throw new Error(backendMessage || 'El archivo enviado no es válido.');
+    }
+
+    if (status === 500 && code === 'INTERNAL_ERROR') {
+      throw new Error('No se pudo procesar la imagen. Intenta con otra foto (JPG/PNG) de menor tamaño.');
+    }
+
+    const message = backendMessage || err.message || 'Error al subir la imagen';
+    throw new Error(message);
+  }
 }
 
 export function getAuthHeaders() {
