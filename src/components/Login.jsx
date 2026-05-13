@@ -3,23 +3,26 @@ import { login } from '../auth';
 import '../styles/components/login.css';
 
 export function Login() {
-  const [mail, setMail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  });
+  const [ui, setUi] = useState({
+    loading: false,
+    error: '',
+  });
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setUi({ loading: true, error: '' });
 
     try {
-      await login(mail, password);
+      await login(form.email, form.password);
       window.location.href = '/home';
     } catch (err) {
-      setError(err.message || 'Error en la autenticación');
+      setUi({ loading: false, error: err.message || 'Error en la autenticación' });
     } finally {
-      setLoading(false);
+      setUi((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -42,8 +45,8 @@ export function Login() {
             <input
               id="mail"
               type="email"
-              value={mail}
-              onChange={(e) => setMail(e.target.value)}
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
               placeholder="tu@correo.com"
               required
               className="form-input"
@@ -57,8 +60,8 @@ export function Login() {
             <input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+                value={form.password}
+                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
               placeholder="Mínimo 8 caracteres"
               required
               minLength="8"
@@ -66,14 +69,14 @@ export function Login() {
             />
           </div>
 
-          {error && <div className="login-error">{error}</div>}
+          {ui.error && <div className="login-error">{ui.error}</div>}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={ui.loading}
             className="login-button"
           >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {ui.loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
 

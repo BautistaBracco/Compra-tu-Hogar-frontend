@@ -3,53 +3,62 @@ import { login, register } from '../auth';
 import '../styles/components/register.css';
 
 export function Register() {
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [form, setForm] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [ui, setUi] = useState({
+    loading: false,
+    error: '',
+    success: '',
+  });
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setUi((prev) => ({ ...prev, error: '', success: '', loading: false }));
 
-    if (!nombre.trim()) {
-      setError('El nombre es requerido');
+    if (!form.nombre.trim()) {
+      setUi((prev) => ({ ...prev, error: 'El nombre es requerido' }));
       return;
     }
 
-    if (!email.trim()) {
-      setError('El correo electrónico es requerido');
+    if (!form.email.trim()) {
+      setUi((prev) => ({ ...prev, error: 'El correo electrónico es requerido' }));
       return;
     }
 
-    if (password.length < 8) {
-      setError('La contraseña debe tener mínimo 8 caracteres');
+    if (form.password.length < 8) {
+      setUi((prev) => ({ ...prev, error: 'La contraseña debe tener mínimo 8 caracteres' }));
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+    if (form.password !== form.confirmPassword) {
+      setUi((prev) => ({ ...prev, error: 'Las contraseñas no coinciden' }));
       return;
     }
 
-    setLoading(true);
+    setUi((prev) => ({ ...prev, loading: true, error: '', success: '' }));
 
     try {
-      const data = await register(nombre, email, password);
-      setSuccess(
+      const data = await register(form.nombre, form.email, form.password);
+      setUi((prev) => ({
+        ...prev,
+        success:
           `¡Registro exitoso! Bienvenido, ${data.nombre || 'Usuario'}. Iniciando sesión...`
-      );
-      await login(email, password);
+      }));
+      await login(form.email, form.password);
       window.location.href = '/home';
     } catch (err) {
-      setError(err.message || 'Error en el registro. Por favor, intenta de nuevo.');
+      setUi((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Error en el registro. Por favor, intenta de nuevo.',
+      }));
       console.error('Error de registro:', err);
     } finally {
-      setLoading(false);
+      setUi((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -72,8 +81,8 @@ export function Register() {
               <input
                   id="nombre"
                   type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                      value={form.nombre}
+                      onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
                   placeholder="Juan Pérez"
                   required
                   className="form-input"
@@ -87,8 +96,8 @@ export function Register() {
               <input
                   id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                      value={form.email}
+                      onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="tu@correo.com"
                   required
                   className="form-input"
@@ -102,8 +111,8 @@ export function Register() {
               <input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                      value={form.password}
+                      onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="Mínimo 8 caracteres"
                   required
                   minLength="8"
@@ -118,8 +127,8 @@ export function Register() {
               <input
                   id="confirmPassword"
                   type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={form.confirmPassword}
+                      onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                   placeholder="Repite tu contraseña"
                   required
                   minLength="8"
@@ -127,15 +136,15 @@ export function Register() {
               />
             </div>
 
-            {error && <div className="register-error">{error}</div>}
-            {success && <div className="register-success">{success}</div>}
+            {ui.error && <div className="register-error">{ui.error}</div>}
+            {ui.success && <div className="register-success">{ui.success}</div>}
 
             <button
                 type="submit"
-                disabled={loading}
+                disabled={ui.loading}
                 className="register-button"
             >
-              {loading ? 'Registrando...' : 'Crear Cuenta'}
+              {ui.loading ? 'Registrando...' : 'Crear Cuenta'}
             </button>
           </form>
 
