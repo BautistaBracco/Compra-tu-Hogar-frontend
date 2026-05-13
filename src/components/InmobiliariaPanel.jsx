@@ -1,4 +1,5 @@
 import { logout } from '../auth';
+import { useEffect } from 'react';
 import '../styles/components/inmobiliaria.css';
 
 export function InmobiliariaPanel() {
@@ -6,6 +7,14 @@ export function InmobiliariaPanel() {
     logout();
     window.location.href = '/login';
   };
+
+  useEffect(() => {
+    document.body.classList.add('panel-inmobiliaria-no-scrollbar');
+
+    return () => {
+      document.body.classList.remove('panel-inmobiliaria-no-scrollbar');
+    };
+  }, []);
 
   return (
     <div className="inmobiliaria-container">

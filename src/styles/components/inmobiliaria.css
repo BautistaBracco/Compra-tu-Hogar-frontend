@@ -2,6 +2,16 @@
    ESTILOS - Inmobiliaria Panel Component
    ═══════════════════════════════════════════════════════════════ */
 
+body.panel-inmobiliaria-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
 .inmobiliaria-container {
   min-height: 100vh;
   display: flex;
