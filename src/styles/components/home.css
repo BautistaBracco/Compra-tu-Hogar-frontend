@@ -40,6 +40,11 @@
   align-items: center;
 }
 
+/* permitir que el logo se reduzca en pantallas pequeñas para evitar wrapping */
+.home-logo {
+  min-width: 0;
+}
+
 .home-logo-text {
   margin: 0;
   font-size: 24px;
@@ -52,6 +57,10 @@
   display: flex;
   gap: var(--spacing-md);
   align-items: center;
+}
+
+.home-nav {
+  flex-shrink: 0;
 }
 
 .home-nav-link {
@@ -69,6 +78,21 @@
   background-color: var(--gray-100);
 }
 
+.home-panel-link {
+  background-color: var(--success-color);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-weight: var(--font-weight-bold);
+}
+
+.home-panel-link:hover {
+  background-color: var(--success-dark);
+  color: var(--white) !important;
+}
+
 .home-logout-btn {
   text-decoration: none;
   color: var(--white);
@@ -77,14 +101,18 @@
   background-color: var(--primary-color);
   border-radius: var(--border-radius-md);
   transition: background-color var(--transition-base);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   cursor: pointer;
   font-size: var(--font-size-sm);
+  line-height: 1;
 }
 
 .home-logout-btn:hover {
   background-color: var(--primary-dark);
+  color: var(--white) !important;
 }
 
 .home-menu-btn {
@@ -111,6 +139,20 @@
   cursor: pointer;
   font-size: var(--font-size-sm);
 }
+
+.home-mobile-panel-link {
+  background-color: var(--success-color);
+  color: var(--white);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+.home-mobile-panel-link:hover {
+  background-color: var(--success-dark);
+  color: var(--white) !important;
+}
+
+/* restored menu button visibility controlled by media queries */
 
 .home-mobile-logout {
   padding: var(--spacing-md);
@@ -178,8 +220,9 @@
 .home-stat-card {
   text-align: center;
   padding: var(--spacing-2xl);
-  background-color: var(--bg-primary);
+  background-color: var(--white);
   border-radius: var(--border-radius-xl);
+  border: 1px solid var(--gray-200);
 }
 
 .home-stat-icon {

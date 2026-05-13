@@ -115,3 +115,80 @@ export function hasRole(roles) {
   if (Array.isArray(roles)) return roles.includes(userRole);
   return userRole === roles;
 }
+
+// ═══════════════════════════════════════════
+// ADMIN FUNCTIONS
+// ═══════════════════════════════════════════
+
+export async function crearInmobiliaria(nombre, email, password) {
+  try {
+    const token = getToken();
+    const payload = {
+      nombre,
+      email,
+      password,
+    };
+    console.log('Payload enviado para crear inmobiliaria:', payload);
+    const res = await axiosInstance.post('/admin/inmobiliaria', payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al crear inmobiliaria:', err);
+    console.error('Response data:', err?.response?.data);
+    const message = err?.response?.data?.message || err.message || 'Error al crear la inmobiliaria';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerInmobiliarias(page = 0, size = 20) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/usuarios', {
+      params: { rol: 'INMOBILIARIA' },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener inmobiliarias:', err);
+    console.error('Response data:', err?.response?.data);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener inmobiliarias';
+    throw new Error(message);
+  }
+}
+
+export async function crearCaracteristica(nombre, descripcion = '') {
+  try {
+    const token = getToken();
+    // Intentar con diferentes formatos de payload
+    const payload = {
+      nombre: nombre,
+      descripcion: descripcion || null,
+    };
+    console.log('Payload enviado:', payload);
+    const res = await axiosInstance.post('/admin/caracteristicas', payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al crear característica:', err);
+    console.error('Response data:', err?.response?.data);
+    const message = err?.response?.data?.message || err.message || 'Error al crear la característica';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerCaracteristicas() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/usuarios/caracteristicas', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener características:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener características';
+    throw new Error(message);
+  }
+}
+
