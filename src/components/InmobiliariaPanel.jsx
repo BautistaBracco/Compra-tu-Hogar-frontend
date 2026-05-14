@@ -327,14 +327,16 @@ export function InmobiliariaPanel() {
     }));
   };
 
-  const quitarImagen = (url) => {
+  const eliminarImagen = (urlToRemove) => {
     setPublicationForm((prev) => ({
       ...prev,
-      imagenes: (prev.imagenes || []).filter((item) => item !== url),
+      imagenes: (prev.imagenes || []).filter((url) => url !== urlToRemove),
       error: '',
       success: '',
     }));
   };
+
+  // No file-upload handler: solo aceptamos URLs desde el input izquierdo.
 
   const actualizarCampoPropiedad = (campo, valor) => {
     setPublicationForm((prev) => ({
@@ -770,6 +772,14 @@ export function InmobiliariaPanel() {
                           type="url"
                           value={publicationForm.imagenUrlInput}
                           onChange={(e) => actualizarInputImagen(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (String(publicationForm.imagenUrlInput || '').trim()) {
+                                agregarImagen();
+                              }
+                            }
+                          }}
                           placeholder="Pega una URL de imagen"
                           className="form-input"
                         />
@@ -778,30 +788,18 @@ export function InmobiliariaPanel() {
                           className="inmobiliaria-primary-button image-add-button"
                           onClick={agregarImagen}
                           disabled={!String(publicationForm.imagenUrlInput || '').trim()}
+                          aria-label="Agregar imagen"
+                          title="Agregar imagen"
                         >
                           +
                         </button>
                       </div>
 
-                      <div className="image-uploader-gallery">
-                        {imagenesSeleccionadas.length > 0 ? (
-                          imagenesSeleccionadas.map((url) => (
-                            <div key={url} className="image-thumb">
-                              <img src={url} alt="Vista previa de la imagen" />
-                              <button
-                                type="button"
-                                className="image-thumb-remove"
-                                onClick={() => quitarImagen(url)}
-                                aria-label="Quitar imagen"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="image-uploader-empty">Agrega una URL y presiona + para ver las imágenes aquí.</p>
-                        )}
-                      </div>
+                      <p className="image-uploader-empty">
+                        {imagenesSeleccionadas.length > 0
+                          ? `${imagenesSeleccionadas.length} imagen(es) cargada(s). Se ven en la vista previa de la derecha.`
+                          : 'Agrega una URL y presiona +. Las imágenes se muestran a la derecha.'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1027,6 +1025,14 @@ export function InmobiliariaPanel() {
                 {imagenesSeleccionadas.slice(0, 3).map((url) => (
                   <span key={url} className="preview-image-item preview-image-thumb">
                     <img src={url} alt="Vista previa" />
+                    <button
+                      type="button"
+                      className="preview-image-remove"
+                      onClick={() => eliminarImagen(url)}
+                      aria-label="Eliminar imagen"
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
                 {imagenesSeleccionadas.length === 0 && (
