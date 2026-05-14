@@ -66,6 +66,40 @@ const axiosInstance = axios.create({
   headers: {},
 });
 
+// Interceptor para adjuntar token automáticamente en todas las requests
+axiosInstance.interceptors.request.use((config) => {
+  try {
+    const token = getToken();
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // ignorar errores al obtener token
+  }
+  return config;
+});
+
+// Interceptor para manejar 401 (token inválido/expirado)
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      try {
+        console.warn('API returned 401 — cerrando sesión');
+        logout();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?expired=1';
+        }
+      } catch (e) {
+        // ignorar
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export async function login(email, password) {
   try {
     const res = await axiosInstance.post('/auth/login', { email, password });
