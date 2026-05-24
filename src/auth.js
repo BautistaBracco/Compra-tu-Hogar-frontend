@@ -66,6 +66,40 @@ const axiosInstance = axios.create({
   headers: {},
 });
 
+// Interceptor para adjuntar token automáticamente en todas las requests
+axiosInstance.interceptors.request.use((config) => {
+  try {
+    const token = getToken();
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // ignorar errores al obtener token
+  }
+  return config;
+});
+
+// Interceptor para manejar 401 (token inválido/expirado)
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      try {
+        console.warn('API returned 401 — cerrando sesión');
+        logout();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?expired=1';
+        }
+      } catch (e) {
+        // ignorar
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export async function login(email, password) {
   try {
     const res = await axiosInstance.post('/auth/login', { email, password });
@@ -173,11 +207,11 @@ export function logout() {
 }
 
 export async function uploadUserImage(file) {
-  try {
-    if (!(file instanceof File)) {
-      throw new Error('Archivo inválido. Selecciona una imagen nuevamente.');
-    }
+  if (!(file instanceof File)) {
+    throw new Error('Archivo inválido. Selecciona una imagen nuevamente.');
+  }
 
+  try {
     const token = getToken();
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -236,14 +270,6 @@ export async function updateUserProfile(payload) {
   }
 }
 
-export function getAuthHeaders() {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-}
-
 export function hasRole(roles) {
   const userRole = getUserRole();
   if (!userRole) return false;
@@ -276,7 +302,7 @@ export async function crearInmobiliaria(nombre, email, password) {
   }
 }
 
-export async function obtenerInmobiliarias(page = 0, size = 20) {
+export async function obtenerInmobiliarias() {
   try {
     const token = getToken();
     const res = await axiosInstance.get('/admin/usuarios', {
@@ -323,6 +349,189 @@ export async function obtenerCaracteristicas() {
   } catch (err) {
     console.error('Error al obtener características:', err);
     const message = err?.response?.data?.message || err.message || 'Error al obtener características';
+    throw new Error(message);
+  }
+}
+
+// ═══════════════════════════════════════════
+// INMOBILIARIA FUNCTIONS
+// ═══════════════════════════════════════════
+
+function sanitizeNumber(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sanitizeInteger(value) {
+  const parsed = sanitizeNumber(value);
+  return parsed === null ? null : Math.trunc(parsed);
+}
+
+function sanitizeList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value !== 'string') return [];
+
+  return value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function sanitizePublicationPayload(publicacion = {}) {
+  const propiedad = publicacion.propiedad || {};
+  const caracteristicaIds = Array.isArray(propiedad.caracteristicaIds)
+    ? propiedad.caracteristicaIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id))
+    : [];
+
+  return {
+    descripcion: String(publicacion.descripcion || '').trim(),
+    precio: sanitizeNumber(publicacion.precio),
+    imagenes: sanitizeList(publicacion.imagenes),
+    propiedad: {
+      tipo: propiedad.tipo,
+      ubicacion: String(propiedad.ubicacion || '').trim(),
+      piso: String(propiedad.piso || '').trim(),
+      depto: String(propiedad.depto || '').trim(),
+      superficie: sanitizeInteger(propiedad.superficie),
+      ambientes: sanitizeInteger(propiedad.ambientes),
+      sanitarios: sanitizeInteger(propiedad.sanitarios),
+      expensas: sanitizeInteger(propiedad.expensas),
+      caracteristicaIds,
+    },
+  };
+}
+
+function sanitizeUpdatePublicacionPayload(publicacion = {}) {
+  return {
+    descripcion: String(publicacion.descripcion || '').trim(),
+    precio: sanitizeNumber(publicacion.precio),
+    imagenes: sanitizeList(publicacion.imagenes),
+  };
+}
+
+function appendQueryParam(params, key, value) {
+  if (value === undefined || value === null || value === '') return;
+  params.append(key, String(value));
+}
+
+export async function crearPublicacion(publicacion) {
+  try {
+    const token = getToken();
+    const payload = sanitizePublicationPayload(publicacion);
+    const res = await axiosInstance.post('/inmobiliaria/publicacion', payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al crear publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al crear la publicación';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerPublicaciones(filtros = {}) {
+  try {
+    const token = getToken();
+    const params = new URLSearchParams();
+
+    appendQueryParam(params, 'vendida', filtros.vendida);
+    appendQueryParam(params, 'tipo', filtros.tipo);
+    appendQueryParam(params, 'minPrecio', filtros.minPrecio);
+    appendQueryParam(params, 'maxPrecio', filtros.maxPrecio);
+    appendQueryParam(params, 'ubicacion', filtros.ubicacion);
+    appendQueryParam(params, 'ambientesMin', filtros.ambientesMin);
+    appendQueryParam(params, 'ambientesMax', filtros.ambientesMax);
+    appendQueryParam(params, 'inmobiliariaId', filtros.inmobiliariaId);
+
+    if (Array.isArray(filtros.caracteristicaIds)) {
+      filtros.caracteristicaIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id))
+        .forEach((id) => params.append('caracteristicaIds', String(id)));
+    }
+
+    const res = await axiosInstance.get('/usuarios/publicaciones', {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener publicaciones:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener publicaciones';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerPropiedadPorUbicacion(ubicacion, piso = '', depto = '') {
+  try {
+    const token = getToken();
+    const encodedUbicacion = encodeURIComponent(String(ubicacion || '').trim());
+    const res = await axiosInstance.get(`/usuarios/propiedad/${encodedUbicacion}`, {
+      params: {
+        piso,
+        depto,
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    if (err?.response?.status === 404) return null;
+
+    console.error('Error al obtener propiedad por ubicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener la propiedad';
+    throw new Error(message);
+  }
+}
+
+export async function modificarPublicacion(publicacion, payload = null) {
+  const id = typeof publicacion === 'object' ? publicacion?.id : publicacion;
+
+  if (!id) {
+    throw new Error('No se pudo identificar la publicación a modificar');
+  }
+
+  try {
+    const token = getToken();
+    const body = sanitizeUpdatePublicacionPayload(payload || publicacion);
+
+    const res = await axiosInstance.put(`/inmobiliaria/publicacion/${id}`, body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al modificar publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al modificar la publicación';
+    throw new Error(message);
+  }
+}
+
+export async function eliminarPublicacion(publicacion) {
+  const id = typeof publicacion === 'object' ? publicacion?.id : publicacion;
+
+  if (!id) {
+    throw new Error('No se pudo identificar la publicación a eliminar');
+  }
+
+  try {
+    const token = getToken();
+
+    await axiosInstance.delete(`/inmobiliaria/publicacion/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('Error al eliminar publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al eliminar la publicación';
     throw new Error(message);
   }
 }
