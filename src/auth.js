@@ -471,6 +471,120 @@ export async function obtenerPublicaciones(filtros = {}) {
   }
 }
 
+export async function obtenerPublicacionPorId(publicacionId) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get(`/usuarios/publicacion/${publicacionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener la publicación';
+    throw new Error(message);
+  }
+}
+
+export async function agregarFavorito(publicacionId) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.post(`/comprador/favoritos/${publicacionId}`, null, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al agregar favorito:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al agregar favorito';
+    throw new Error(message);
+  }
+}
+
+export async function eliminarFavorito(publicacionId) {
+  try {
+    const token = getToken();
+    await axiosInstance.delete(`/comprador/favoritos/${publicacionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('Error al eliminar favorito:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al eliminar favorito';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerFavoritos() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/comprador/favoritos', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener favoritos:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener favoritos';
+    throw new Error(message);
+  }
+}
+
+export async function agregarResena(publicacionId, payload) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.post(`/comprador/reseñas/${publicacionId}`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al agregar reseña:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al agregar la reseña';
+    throw new Error(message);
+  }
+}
+
+export async function eliminarResena(publicacionId) {
+  try {
+    const token = getToken();
+    await axiosInstance.delete(`/comprador/reseñas/${publicacionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('Error al eliminar reseña:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al eliminar la reseña';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerResenasPublicacion(publicacionId) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get(`/usuarios/publicaciones/${publicacionId}/reseñas`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener reseñas:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener las reseñas';
+    throw new Error(message);
+  }
+}
+
+export async function comprarPublicacion(publicacionId) {
+  try {
+    const token = getToken();
+    await axiosInstance.post(`/comprador/comprar/${publicacionId}`, null, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('Error al comprar publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al comprar la propiedad';
+    throw new Error(message);
+  }
+}
+
 export async function obtenerPropiedadPorUbicacion(ubicacion, piso = '', depto = '') {
   try {
     const token = getToken();

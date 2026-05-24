@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { logout, getUserName, getUserRole } from '../auth';
 
 const stats = [
@@ -14,10 +15,16 @@ export function Home() {
   const userName = getUserName() || 'Usuario';
   const userRole = getUserRole();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     window.location.href = '/login';
+  };
+
+  const goToProperties = () => {
+    setIsMenuOpen(false);
+    navigate('/propiedades');
   };
 
   const isAdmin = userRole === 'administrador';
@@ -32,11 +39,11 @@ export function Home() {
           </div>
 
           <nav className="home-nav" aria-label="Navegación principal">
-            <a href="#" className="home-nav-link">Propiedades</a>
-            <a href="#" className="home-nav-link">Favoritos</a>
-            <a href="/mi-perfil" className="home-nav-link">Mi Perfil</a>
-            {isAdmin && <a href="/admin" className="home-nav-link home-panel-link">Panel Admin</a>}
-            {isInmobiliaria && <a href="/inmobiliaria" className="home-nav-link home-panel-link">Panel Inmobiliaria</a>}
+            <Link to="/propiedades" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Propiedades</Link>
+            <Link to="/favoritos" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Favoritos</Link>
+            <Link to="/mi-perfil" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Mi Perfil</Link>
+            {isAdmin && <Link to="/admin" className="home-nav-link home-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>}
+            {isInmobiliaria && <Link to="/inmobiliaria" className="home-nav-link home-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Inmobiliaria</Link>}
             <button type="button" className="home-logout-btn" onClick={handleLogout}>
               Cerrar Sesión
             </button>
@@ -54,11 +61,11 @@ export function Home() {
         </div>
 
         <div className={`home-mobile-menu ${isMenuOpen ? 'active' : ''}`}>
-          <a href="#" className="home-mobile-link">Propiedades</a>
-          <a href="#" className="home-mobile-link">Favoritos</a>
-          <a href="/mi-perfil" className="home-mobile-link">Mi Perfil</a>
-          {isAdmin && <a href="/admin" className="home-mobile-link home-mobile-panel-link">Panel Admin</a>}
-          {isInmobiliaria && <a href="/inmobiliaria" className="home-mobile-link home-mobile-panel-link">Panel Inmobiliaria</a>}
+          <button type="button" className="home-mobile-link home-mobile-link-button" onClick={goToProperties}>Propiedades</button>
+          <Link to="/favoritos" className="home-mobile-link" onClick={() => setIsMenuOpen(false)}>Favoritos</Link>
+          <Link to="/mi-perfil" className="home-mobile-link" onClick={() => setIsMenuOpen(false)}>Mi Perfil</Link>
+          {isAdmin && <Link to="/admin" className="home-mobile-link home-mobile-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>}
+          {isInmobiliaria && <Link to="/inmobiliaria" className="home-mobile-link home-mobile-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Inmobiliaria</Link>}
           <button type="button" className="home-mobile-logout" onClick={handleLogout}>
             Cerrar Sesión
           </button>
@@ -69,7 +76,7 @@ export function Home() {
         <div className="home-hero-content">
           <h2 className="home-hero-title">¡Bienvenido, {userName}!</h2>
           <p className="home-hero-subtitle">Encuentra tu hogar ideal entre miles de propiedades</p>
-          <button type="button" className="home-hero-btn">Explorar Propiedades</button>
+          <button type="button" className="home-hero-btn" onClick={goToProperties}>Explorar Propiedades</button>
         </div>
       </section>
 
