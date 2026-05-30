@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  agregarFavorito,
-  eliminarFavorito,
   obtenerPublicaciones,
-  obtenerPublicacionPorId,
-  obtenerResenasPublicacion,
-  agregarResena,
-  eliminarResena,
-  comprarPublicacion,
-  getUserId,
 } from '../auth';
 import '../styles/components/properties.css';
 
@@ -45,18 +37,13 @@ function getPublicacionLabel(publicacion) {
 export function Propiedades() {
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
-  const [selectedPublicationId, setSelectedPublicationId] = useState(null);
-  const [selectedPublication, setSelectedPublication] = useState(null);
-  const [resenas, setResenas] = useState([]);
-  const [reviewForm, setReviewForm] = useState(initialReviewForm);
   const [pendingAction, setPendingAction] = useState({ type: '', id: null });
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [successPropertyName, setSuccessPropertyName] = useState('');
 
-  const userId = Number(getUserId() || 0);
+
 
   const publicacionesAgrupadas = useMemo(() => {
     const grupos = new Map();
@@ -82,14 +69,8 @@ export function Propiedades() {
     });
   }, [publicaciones]);
 
-  const activePublication = useMemo(() => {
-    if (!selectedPublicationId) return null;
-    return selectedPublication || publicaciones.find((pub) => pub.id === selectedPublicationId) || null;
-  }, [publicaciones, selectedPublication, selectedPublicationId]);
-
   const patchPublication = (publicacionId, updater) => {
     setPublicaciones((prev) => prev.map((pub) => (pub.id === publicacionId ? updater(pub) : pub)));
-    setSelectedPublication((prev) => (prev?.id === publicacionId ? updater(prev) : prev));
   };
 
   const loadPublicaciones = async () => {
@@ -100,9 +81,7 @@ export function Propiedades() {
       const data = await obtenerPublicaciones();
       setPublicaciones(Array.isArray(data) ? data : data?.content || []);
 
-      if (!selectedPublicationId && Array.isArray(data) && data.length > 0) {
-        setSelectedPublicationId(data[0].id);
-      }
+      // no auto-seleccionamos; el detalle se muestra en su propia página
     } catch (err) {
       setError(err.message || 'No se pudieron cargar las publicaciones');
     } finally {
@@ -110,43 +89,20 @@ export function Propiedades() {
     }
   };
 
-  const loadDetalle = async (publicacionId) => {
-    if (!publicacionId) return;
-
-    setDetailLoading(true);
-    setError('');
-
-    try {
-      const [detalle, listaResenas] = await Promise.all([
-        obtenerPublicacionPorId(publicacionId),
-        obtenerResenasPublicacion(publicacionId),
-      ]);
-
-      setSelectedPublication(detalle);
-      setResenas(Array.isArray(listaResenas) ? listaResenas : []);
-      setReviewForm(initialReviewForm);
-    } catch (err) {
-      setError(err.message || 'No se pudo cargar el detalle de la publicación');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+  // El detalle ahora se muestra en su propia ruta; no cargamos detalles aquí.
 
   useEffect(() => {
     void loadPublicaciones();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (selectedPublicationId) {
-      void loadDetalle(selectedPublicationId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPublicationId]);
+
+
+  const navigate = useNavigate();
 
   const selectPublication = (publicacion) => {
-    setSelectedPublicationId(publicacion.id);
-    setSelectedPublication(publicacion);
+    // Ahora navegamos a la página de detalle de la publicación
+    navigate(`/propiedades/${publicacion.id}`);
   };
 
   const isPending = (type, id) => pendingAction.type === type && pendingAction.id === id;
@@ -191,9 +147,6 @@ export function Propiedades() {
       setPurchaseSuccess(true);
       setStatusMessage('Compra realizada exitosamente.');
       await loadPublicaciones();
-      if (selectedPublicationId === publicacion.id) {
-        await loadDetalle(publicacion.id);
-      }
     } catch (err) {
       setError(err.message || 'No se pudo completar la compra');
     } finally {
@@ -201,56 +154,7 @@ export function Propiedades() {
     }
   };
 
-  const handleReviewSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!activePublication?.id) return;
-
-    const puntaje = Number(reviewForm.puntaje);
-    if (!Number.isFinite(puntaje) || puntaje < 0 || puntaje > 10) {
-      setError('El puntaje debe estar entre 0 y 10.');
-      return;
-    }
-
-    setPendingAction({ type: 'reseña', id: activePublication.id });
-    setError('');
-    setStatusMessage('');
-
-    try {
-      await agregarResena(activePublication.id, {
-        puntaje,
-        comentario: reviewForm.comentario.trim() || null,
-      });
-
-      setStatusMessage('Reseña agregada correctamente.');
-      await loadDetalle(activePublication.id);
-    } catch (err) {
-      setError(err.message || 'No se pudo agregar la reseña');
-    } finally {
-      setPendingAction({ type: '', id: null });
-    }
-  };
-
-  const handleDeleteResena = async (resena) => {
-    const confirmed = window.confirm('¿Querés borrar esta reseña?');
-    if (!confirmed) return;
-
-    setPendingAction({ type: 'borrar-reseña', id: resena.id });
-    setError('');
-    setStatusMessage('');
-
-    try {
-      await eliminarResena(resena.publicacionId);
-      setStatusMessage('Reseña eliminada correctamente.');
-      if (activePublication?.id) {
-        await loadDetalle(activePublication.id);
-      }
-    } catch (err) {
-      setError(err.message || 'No se pudo eliminar la reseña');
-    } finally {
-      setPendingAction({ type: '', id: null });
-    }
-  };
+  // Las acciones de reseñas ahora se manejan en la página de detalle
 
   return (
     <div className="properties-page">
@@ -304,8 +208,14 @@ export function Propiedades() {
 
                 <div className="property-group-specs">
                   <span>{propiedad?.superficie ?? '—'} m²</span>
-                  <span>{propiedad?.ambientes ?? '—'} ambientes</span>
-                  <span>{propiedad?.sanitarios ?? '—'} baños</span>
+                  <span>
+                    {propiedad?.ambientes ?? '—'}{' '}
+                    {propiedad?.ambientes === 1 ? 'ambiente' : 'ambientes'}
+                  </span>
+                  <span>
+                    {propiedad?.sanitarios ?? '—'}{' '}
+                    {propiedad?.sanitarios === 1 ? 'baño' : 'baños'}
+                  </span>
                   <span>{propiedad?.expensas != null ? formatCurrency(propiedad.expensas) : 'Sin expensas'}</span>
                 </div>
 
@@ -319,90 +229,57 @@ export function Propiedades() {
                   </div>
                 )}
 
-                <div className="publication-grid">
-                  {publicacionesDeLaPropiedad.map((publicacion) => {
-                    const imagenPrincipal = Array.isArray(publicacion.imagenes) ? publicacion.imagenes[0] : '';
-                    const isSelected = selectedPublicationId === publicacion.id;
+                {/* Mostrar una sola tarjeta por propiedad: elegir la publicación de menor precio como principal */}
+                {(() => {
+                  const pubs = publicacionesDeLaPropiedad || [];
+                  const count = pubs.length;
+                  const prices = pubs.map((p) => Number(p.precio) || 0).filter((v) => Number.isFinite(v));
+                  const minPrice = prices.length ? Math.min(...prices) : null;
+                  const maxPrice = prices.length ? Math.max(...prices) : null;
+                  // elegir publicación con precio mínimo
+                  const primaryPub = pubs.slice().sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0))[0] || pubs[0];
+                  const imagenPrincipal = Array.isArray(primaryPub?.imagenes) ? primaryPub.imagenes[0] : '';
 
-                    return (
-                      <article
-                        key={publicacion.id}
-                        className={`publication-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => selectPublication(publicacion)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            selectPublication(publicacion);
-                          }
-                        }}
-                      >
-                        <div className="publication-image-wrap">
-                          {imagenPrincipal ? (
-                            <img
-                              src={imagenPrincipal}
-                              alt={getPublicacionLabel(publicacion)}
-                              className="publication-image"
-                            />
-                          ) : (
-                            <div className="publication-image-placeholder">Sin imagen</div>
-                          )}
-                          <div className="publication-price">{formatCurrency(publicacion.precio)}</div>
+                  const priceLabel = minPrice != null && maxPrice != null
+                    ? (minPrice === maxPrice ? formatCurrency(minPrice) : `${formatCurrency(minPrice)} - ${formatCurrency(maxPrice)}`)
+                    : 'Precio no disponible';
+
+                  const inmobiliariasLabel = count === 1 ? '1 inmobiliaria' : `${count} inmobiliarias`;
+                  const availabilityLabel = propiedad?.vendida
+                    ? `Estaba disponible con ${inmobiliariasLabel}`
+                    : count > 1
+                      ? `Disponible con ${inmobiliariasLabel}`
+                      : 'Oferta única';
+
+                  return (
+                    <article className="property-card-summary" onClick={() => navigate(`/propiedades/propiedad/${propiedad?.id}`)} role="button" tabIndex={0}>
+                      <div className="publication-image-wrap">
+                        {imagenPrincipal ? (
+                          <img src={imagenPrincipal} alt={`Foto principal propiedad ${propiedad?.id}`} className="publication-image" />
+                        ) : (
+                          <div className="publication-image-placeholder">Sin imagen</div>
+                        )}
+                        <div className="publication-price">{priceLabel}</div>
+                      </div>
+
+                      <div className="publication-content">
+                        <div className="publication-topline">
+                          <span className="publication-inmobiliaria">{primaryPub?.inmobiliaria?.nombre || 'Inmobiliaria'}</span>
+                          <span className="publication-badge">{availabilityLabel}</span>
                         </div>
 
-                        <div className="publication-content">
-                          <div className="publication-topline">
-                            <span className="publication-inmobiliaria">
-                              {publicacion.inmobiliaria?.nombre || 'Inmobiliaria'}
-                            </span>
-                            <span className={`publication-favorite ${publicacion.esFavorito ? 'active' : ''}`}>
-                              {publicacion.esFavorito ? 'En favoritos' : 'No favorito'}
-                            </span>
-                          </div>
+                        <h3 className="publication-title">{propiedad?.tipo ? `${propiedad.tipo} en ${propiedad.ubicacion}` : (propiedad?.ubicacion || 'Ubicación no disponible')}</h3>
+                        <p className="publication-description">{primaryPub?.descripcion || ''}</p>
 
-                          <h3 className="publication-title">{getPublicacionLabel(publicacion)}</h3>
-                          <p className="publication-description">{publicacion.descripcion}</p>
-
-                          <div className="publication-actions">
-                            <button
-                              type="button"
-                              className="properties-action-button secondary"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFavorito(publicacion);
-                              }}
-                              disabled={isPending('favorito', publicacion.id)}
-                            >
-                              {isPending('favorito', publicacion.id)
-                                ? 'Actualizando...'
-                                : publicacion.esFavorito
-                                  ? 'Quitar favorito'
-                                  : 'Agregar favorito'}
-                            </button>
-
-
-                            <button
-                              type="button"
-                              className="properties-action-button primary"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleComprar(publicacion);
-                              }}
-                              disabled={publicacion?.propiedad?.vendida || isPending('comprar', publicacion.id)}
-                            >
-                              {isPending('comprar', publicacion.id)
-                                ? 'Comprando...'
-                                : publicacion?.propiedad?.vendida
-                                  ? 'Vendida'
-                                  : 'Comprar'}
-                            </button>
-                          </div>
+                        <div className="publication-actions">
+                          <button type="button" className="properties-action-button primary" onClick={(e) => { e.stopPropagation(); navigate(`/propiedades/propiedad/${propiedad?.id}`); }}>
+                            Ver opciones y fotos
+                          </button>
                         </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                      </div>
+                    </article>
+                  );
+                })()}
               </article>
             ))}
           </section>
@@ -435,102 +312,7 @@ export function Propiedades() {
             </div>
           )}
 
-          <aside className="properties-detail-panel">
-            <div className="properties-detail-card">
-              <div className="properties-detail-header">
-                <div>
-                  <p className="properties-eyebrow">Detalle de publicación</p>
-                  <h2 className="properties-detail-title">
-                    {activePublication ? `Publicación #${activePublication.id}` : 'Seleccioná una publicación'}
-                  </h2>
-                </div>
-              </div>
-
-              {detailLoading ? (
-                <div className="properties-state-card compact">Cargando detalle...</div>
-              ) : activePublication ? (
-                <>
-                  <div className="properties-detail-summary">
-                    <p><strong>Inmobiliaria:</strong> {activePublication.inmobiliaria?.nombre || '—'}</p>
-                    <p><strong>Precio:</strong> {formatCurrency(activePublication.precio)}</p>
-                    <p><strong>Favorito:</strong> {activePublication.esFavorito ? 'Sí' : 'No'}</p>
-                    <p><strong>Propiedad vendida:</strong> {activePublication?.propiedad?.vendida ? 'Sí' : 'No'}</p>
-                  </div>
-
-                  <div className="properties-detail-section">
-                    <h3>Reseñar publicación</h3>
-                    <form className="review-form" onSubmit={handleReviewSubmit}>
-                      <label>
-                        Puntaje (0 a 10)
-                        <input
-                          type="number"
-                          min="0"
-                          max="10"
-                          value={reviewForm.puntaje}
-                          onChange={(e) => setReviewForm((prev) => ({ ...prev, puntaje: e.target.value }))}
-                          className="review-input"
-                        />
-                      </label>
-
-                      <label>
-                        Comentario
-                        <textarea
-                          value={reviewForm.comentario}
-                          onChange={(e) => setReviewForm((prev) => ({ ...prev, comentario: e.target.value }))}
-                          className="review-textarea"
-                          rows="4"
-                          placeholder="Escribí tu opinión sobre la publicación"
-                        />
-                      </label>
-
-                      <button
-                        type="submit"
-                        className="properties-action-button primary full-width"
-                        disabled={isPending('reseña', activePublication.id)}
-                      >
-                        {isPending('reseña', activePublication.id) ? 'Guardando...' : 'Agregar reseña'}
-                      </button>
-                    </form>
-                  </div>
-
-                  <div className="properties-detail-section">
-                    <h3>Reseñas de esta publicación</h3>
-                    {resenas.length > 0 ? (
-                      <div className="reviews-list">
-                        {resenas.map((resena) => (
-                          <article key={resena.id} className="review-card">
-                            <div className="review-card-header">
-                                  <div className="review-card-author">
-                                    <strong>{resena.autorNombre}</strong>
-                                    <span className="review-card-rating">⭐ {resena.puntaje}/10</span>
-                                  </div>
-                              {Number(resena.autorId) === userId && (
-                                <button
-                                  type="button"
-                                  className="review-delete-button"
-                                  onClick={() => handleDeleteResena(resena)}
-                                  disabled={isPending('borrar-reseña', resena.id)}
-                                >
-                                  {isPending('borrar-reseña', resena.id) ? 'Borrando...' : 'Borrar'}
-                                </button>
-                              )}
-                            </div>
-                            <p>{resena.comentario || 'Sin comentario'}</p>
-                          </article>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="properties-empty-inline">Todavía no hay reseñas para esta publicación.</p>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <p className="properties-empty-inline">
-                  Elegí una publicación para ver su detalle, reseñas y acciones.
-                </p>
-              )}
-            </div>
-          </aside>
+          {/* El panel de detalle fue movido a la ruta individual de publicación */}
         </div>
       )}
     </div>

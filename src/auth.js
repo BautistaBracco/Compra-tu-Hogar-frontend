@@ -544,10 +544,10 @@ export async function agregarResena(publicacionId, payload) {
   }
 }
 
-export async function eliminarResena(publicacionId) {
+export async function eliminarResena(resenaId) {
   try {
     const token = getToken();
-    await axiosInstance.delete(`/comprador/reseñas/${publicacionId}`, {
+    await axiosInstance.delete(`/comprador/reseñas/${resenaId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (err) {

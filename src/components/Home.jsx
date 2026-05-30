@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { logout, getUserName, getUserRole } from '../auth';
+import { logout, getUserName, getUserRole, hasRole } from '../auth';
 
 const stats = [
   { icon: '🏠', value: '5,234', label: 'Propiedades Disponibles' },
@@ -29,6 +29,7 @@ export function Home() {
 
   const isAdmin = userRole === 'administrador';
   const isInmobiliaria = userRole === 'inmobiliaria';
+  const canSeeFavoritos = hasRole('comprador');
 
   return (
     <div className="home-container">
@@ -40,7 +41,11 @@ export function Home() {
 
           <nav className="home-nav" aria-label="Navegación principal">
             <Link to="/propiedades" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Propiedades</Link>
-            <Link to="/favoritos" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Favoritos</Link>
+            {canSeeFavoritos && (
+              <Link to="/favoritos" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>
+                Favoritos
+              </Link>
+            )}
             <Link to="/mi-perfil" className="home-nav-link" onClick={() => setIsMenuOpen(false)}>Mi Perfil</Link>
             {isAdmin && <Link to="/admin" className="home-nav-link home-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>}
             {isInmobiliaria && <Link to="/inmobiliaria" className="home-nav-link home-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Inmobiliaria</Link>}
@@ -62,7 +67,11 @@ export function Home() {
 
         <div className={`home-mobile-menu ${isMenuOpen ? 'active' : ''}`}>
           <button type="button" className="home-mobile-link home-mobile-link-button" onClick={goToProperties}>Propiedades</button>
-          <Link to="/favoritos" className="home-mobile-link" onClick={() => setIsMenuOpen(false)}>Favoritos</Link>
+          {canSeeFavoritos && (
+            <Link to="/favoritos" className="home-mobile-link" onClick={() => setIsMenuOpen(false)}>
+              Favoritos
+            </Link>
+          )}
           <Link to="/mi-perfil" className="home-mobile-link" onClick={() => setIsMenuOpen(false)}>Mi Perfil</Link>
           {isAdmin && <Link to="/admin" className="home-mobile-link home-mobile-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>}
           {isInmobiliaria && <Link to="/inmobiliaria" className="home-mobile-link home-mobile-panel-link" onClick={() => setIsMenuOpen(false)}>Panel Inmobiliaria</Link>}

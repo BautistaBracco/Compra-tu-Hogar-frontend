@@ -97,6 +97,14 @@ function toNumberOrNull(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function isValidPisoValue(value) {
+  const piso = String(value || '').trim().toUpperCase();
+  if (piso === '' || piso === 'PB') return true;
+  if (!/^\d+$/.test(piso)) return false;
+  const parsed = Number(piso);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 100;
+}
+
 function extractCaracteristicaIds(caracteristicas = [], catalogo = []) {
   if (!Array.isArray(caracteristicas) || caracteristicas.length === 0) return [];
 
@@ -343,10 +351,17 @@ export function InmobiliariaPanel() {
       ...prev,
       error: '',
       success: '',
-      propiedad: {
-        ...prev.propiedad,
-        [campo]: valor,
-      },
+      propiedad: campo === 'tipo' && valor === 'CASA'
+        ? {
+            ...prev.propiedad,
+            [campo]: valor,
+            piso: '',
+            depto: '',
+          }
+        : {
+            ...prev.propiedad,
+            [campo]: valor,
+          },
     }));
   };
 
@@ -372,6 +387,11 @@ export function InmobiliariaPanel() {
   const limpiarFormulario = () => {
     setPublicationForm(buildInitialPublicationFormState());
     setLookupState({ loading: false, found: false, message: '' });
+  };
+
+  const irANuevaPublicacion = () => {
+    limpiarFormulario();
+    setActiveTab('crear');
   };
 
   const prepararEdicion = (publicacion) => {
@@ -416,6 +436,21 @@ export function InmobiliariaPanel() {
 
     if (!String(propiedad.ubicacion || '').trim()) {
       setPublicationForm((prev) => ({ ...prev, error: 'La ubicación es requerida' }));
+      return;
+    }
+
+    if (!isValidPisoValue(propiedad.piso)) {
+      setPublicationForm((prev) => ({ ...prev, error: 'El piso debe ser un número o PB' }));
+      return;
+    }
+
+    if (propiedad.tipo === 'DEPTO' && !String(propiedad.piso || '').trim()) {
+      setPublicationForm((prev) => ({ ...prev, error: 'El piso es requerido para propiedades tipo depto' }));
+      return;
+    }
+
+    if (propiedad.tipo === 'DEPTO' && !String(propiedad.depto || '').trim()) {
+      setPublicationForm((prev) => ({ ...prev, error: 'El depto es requerido para propiedades tipo depto' }));
       return;
     }
 
@@ -501,8 +536,15 @@ export function InmobiliariaPanel() {
     }
 
     try {
+      const isEditingDeletedPublication = publicationForm.mode === 'edit'
+        && Number(publicationForm.id) === Number(publicacion.id);
+
       await eliminarPublicacion(publicacion.id);
       await cargarPublicaciones();
+
+      if (isEditingDeletedPublication) {
+        irANuevaPublicacion();
+      }
     } catch (err) {
       setPublicacionesError(err.message || 'No se pudo eliminar la publicación');
     }
@@ -517,6 +559,8 @@ export function InmobiliariaPanel() {
     setUbicacionFiltro('');
     await cargarPublicaciones('');
   };
+
+  const pisoDeshabilitado = camposPropiedadDeshabilitados || publicationForm.propiedad.tipo === 'CASA';
 
   return (
     <div className="inmobiliaria-container">
@@ -586,7 +630,7 @@ export function InmobiliariaPanel() {
                   <h2>Mis publicaciones</h2>
                   <p>Se muestran las publicaciones vigentes de tu inmobiliaria.</p>
                 </div>
-                <button type="button" className="inmobiliaria-primary-button" onClick={() => setActiveTab('crear')}>
+                <button type="button" className="inmobiliaria-primary-button" onClick={irANuevaPublicacion}>
                   Nueva publicación
                 </button>
               </div>
@@ -654,7 +698,7 @@ export function InmobiliariaPanel() {
                               <span className="publication-id">#{publicacion.id}</span>
                               <h3>{publicacion.descripcion}</h3>
                             </div>
-                            <strong className="publication-price">{formatCurrency(publicacion.precio)}</strong>
+                            <strong className="inmobiliaria-publication-price">{formatCurrency(publicacion.precio)}</strong>
                           </div>
 
                           <div className="publication-meta">
@@ -756,7 +800,6 @@ export function InmobiliariaPanel() {
                       step="0.01"
                       value={publicationForm.precio}
                       onChange={(e) => actualizarCampoPublicacion('precio', e.target.value)}
-                      placeholder="120000.50"
                       className="form-input"
                     />
                   </div>
@@ -852,15 +895,19 @@ export function InmobiliariaPanel() {
                     <label htmlFor="piso-propiedad" className="form-label">
                       Piso
                     </label>
-                    <input
+                    <select
                       id="piso-propiedad"
-                      type="text"
-                      value={publicationForm.propiedad.piso}
+                      value={String(publicationForm.propiedad.piso || '').toUpperCase()}
                       onChange={(e) => actualizarCampoPropiedad('piso', e.target.value)}
-                      placeholder="4 o PB"
                       className="form-input"
-                      disabled={camposPropiedadDeshabilitados}
-                    />
+                      disabled={pisoDeshabilitado}
+                    >
+                      <option value="">Selecciona piso</option>
+                      <option value="PB">Planta baja (PB)</option>
+                      {Array.from({ length: 100 }, (_, index) => String(index + 1)).map((piso) => (
+                        <option key={piso} value={piso}>{piso}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-group">
@@ -874,7 +921,7 @@ export function InmobiliariaPanel() {
                       onChange={(e) => actualizarCampoPropiedad('depto', e.target.value)}
                       placeholder="A"
                       className="form-input"
-                      disabled={camposPropiedadDeshabilitados}
+                      disabled={camposPropiedadDeshabilitados || publicationForm.propiedad.tipo === 'CASA'}
                     />
                   </div>
 
