@@ -424,7 +424,7 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
   display: flex;
   justify-content: space-between;
   gap: var(--spacing-md);
-  align-items: flex-start;
+  align-items: center;
 }
 
 .publication-id {
@@ -435,10 +435,13 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
   font-weight: var(--font-weight-semibold);
 }
 
-.publication-price {
+.inmobiliaria-publication-price {
   color: var(--success-dark);
   font-size: 20px;
   white-space: nowrap;
+  position: static;
+  font-weight: var(--font-weight-bold);
+  margin-left: auto;
 }
 
 .publication-meta,

@@ -6,6 +6,10 @@ import { MiPerfil } from "./components/MiPerfil";
 import { Landing } from "./components/Landing";
 import { AdminPanel } from "./components/AdminPanel";
 import { InmobiliariaPanel } from "./components/InmobiliariaPanel";
+import { Propiedades } from "./components/Propiedades.jsx";
+import { Favoritos } from "./components/Favoritos.jsx";
+import PropertyDetail from "./components/PropertyDetail";
+import PropertyPage from "./components/PropertyPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicRoute } from "./components/PublicRoute";
 import "./styles/components/dashboard.css";
@@ -81,6 +85,38 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/propiedades"
+          element={
+            <ProtectedRoute>
+              <Propiedades />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/propiedades/:id"
+          element={
+            <ProtectedRoute>
+              <PropertyDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/propiedades/propiedad/:id"
+          element={
+            <ProtectedRoute>
+              <PropertyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/favoritos"
+          element={
+            <ProtectedRoute allowedRoles="comprador">
+              <Favoritos />
             </ProtectedRoute>
           }
         />

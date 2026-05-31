@@ -140,6 +140,14 @@
   font-size: var(--font-size-sm);
 }
 
+.home-mobile-link-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+}
+
 .home-mobile-panel-link {
   background-color: var(--success-color);
   color: var(--white);
