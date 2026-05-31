@@ -89,7 +89,7 @@ axiosInstance.interceptors.response.use(
       try {
         console.warn('API returned 401 — cerrando sesión');
         logout();
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login?expired=1';
         }
       } catch (e) {

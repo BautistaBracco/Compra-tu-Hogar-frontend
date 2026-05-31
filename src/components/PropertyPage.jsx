@@ -145,7 +145,7 @@ export default function PropertyPage() {
     setPending({ type: 'favorito', id: selectedOffer.id });
     setError('');
     try {
-      if (selectedOffer.esFavorito) await eliminarFavorito(selectedOffer.id);
+      if (selectedOffer.metadata.esFavorito) await eliminarFavorito(selectedOffer.id);
       else await agregarFavorito(selectedOffer.id);
 
       const detalle = await obtenerPublicacionPorId(selectedOffer.id);
@@ -296,7 +296,7 @@ export default function PropertyPage() {
                   <div className="offer-info">
                     <div className="offer-agent">{offer.inmobiliaria?.nombre || 'Inmobiliaria'}</div>
                     <div className="offer-price">{formatCurrency(offer.precio)}</div>
-                    <div className="offer-meta">{offer.esFavorito? 'En favoritos' : 'Ver oferta'}</div>
+                    <div className="offer-meta">{offer.metadata.esFavorito? 'En favoritos' : 'Ver oferta'}</div>
                   </div>
                 </button>
               );
@@ -489,7 +489,7 @@ export default function PropertyPage() {
 
               <div className="property-sidebar-meta">
                 <span>{selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Disponible'}</span>
-                <span>{selectedOffer?.esFavorito ? 'En favoritos' : 'Sin favorito'}</span>
+                <span>{selectedOffer?.metadata.esFavorito ? 'En favoritos' : 'Sin favorito'}</span>
               </div>
 
               <div className="property-sidebar-actions">
@@ -508,7 +508,7 @@ export default function PropertyPage() {
                   onClick={handleToggleFavorito}
                   disabled={pending.type === 'favorito'}
                 >
-                  {pending.type === 'favorito' ? 'Actualizando...' : (selectedOffer?.esFavorito ? 'Quitar favorito' : 'Agregar favorito')}
+                  {pending.type === 'favorito' ? 'Actualizando...' : (selectedOffer?.metadata.esFavorito ? 'Quitar favorito' : 'Agregar favorito')}
                 </button>
               </div>
 

@@ -4,4 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // Permite que Vite acepte peticiones dirigidas al host 'frontend' en Docker
+    allowedHosts: true,
+  }
 })

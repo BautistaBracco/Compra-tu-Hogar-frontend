@@ -113,7 +113,7 @@ export function Propiedades() {
     setStatusMessage('');
 
     try {
-      if (publicacion.esFavorito) {
+      if (publicacion.metadata.esFavorito) {
         await eliminarFavorito(publicacion.id);
       } else {
         await agregarFavorito(publicacion.id);
@@ -125,7 +125,7 @@ export function Propiedades() {
       }));
 
       setStatusMessage(
-        publicacion.esFavorito ? 'Se eliminó de favoritos.' : 'Se agregó a favoritos.',
+        publicacion.metadata.esFavorito ? 'Se eliminó de favoritos.' : 'Se agregó a favoritos.',
       );
     } catch (err) {
       setError(err.message || 'No se pudo actualizar el favorito');
