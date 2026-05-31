@@ -78,7 +78,6 @@ describe('Flujo de Registro - Compra Tu Hogar', () => {
 
         cy.contains('button', 'Crear Cuenta').click()
 
-        // ✨ ¡LA CLAVE ACÁ!: Buscamos el cartel de error rojo directamente en el DOM
         cy.contains('La contraseña debe tener mínimo 8 caracteres').should('be.visible')
 
         // Verificamos que no haya avanzado de página
@@ -100,7 +99,7 @@ describe('Flujo de Registro - Compra Tu Hogar', () => {
     })
 
     it('Debería mostrar error si el email ya se encuentra registrado en el sistema', () => {
-        // Usamos el mail que tenés configurado para tus pruebas exitosas
+        // Se usa el mail registrado en la base de datos
         const emailExistente = 'juan@gmail.com'
 
         cy.get('input[placeholder="Juan Pérez"]').type('Juan Duplicado')
