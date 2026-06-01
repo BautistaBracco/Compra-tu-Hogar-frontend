@@ -1,0 +1,17 @@
+/* ═══════════════════════════════════════════════════════════════
+   ARCHIVO PRINCIPAL - Importar todas las hojas de estilo
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Variables y estilos globales */
+@import url('./variables.css');
+
+/* Componentes */
+@import url('./components/login.css');
+@import url('./components/register.css');
+@import url('./components/home.css');
+@import url('./components/admin.css');
+@import url('./components/inmobiliaria.css');
+@import url('./components/landing.css');
+@import url('./components/dashboard.css');
+@import url('./components/profile.css');
+
