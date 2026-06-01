@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8080/api/v1' || 'http://localhost:8080';
+import { API_BASE_URL } from './config/api';
 
 const TOKEN_KEY = 'auth_token';
 const USER_ROLE_KEY = 'user_role';

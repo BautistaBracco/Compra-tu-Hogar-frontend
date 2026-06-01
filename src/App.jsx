@@ -12,6 +12,7 @@ import PropertyDetail from "./components/PropertyDetail";
 import PropertyPage from "./components/PropertyPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicRoute } from "./components/PublicRoute";
+import { API_BASE_URL } from "./config/api";
 import "./styles/components/dashboard.css";
 import { useState } from "react";
 import axios from 'axios';
@@ -28,7 +29,7 @@ function Dashboard() {
   const checkHealth = async () => {
     setHealthState((prev) => ({ ...prev, loading: true, error: "" }));
     try {
-      const res = await axios.get('http://localhost:8080/api/v1/health');
+      const res = await axios.get(`${API_BASE_URL}/health`);
       setHealthState((prev) => ({ ...prev, status: res.data }));
     } catch (err) {
       setHealthState((prev) => ({ ...prev, error: err.message }));
