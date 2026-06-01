@@ -648,4 +648,3 @@ export async function eliminarPublicacion(publicacion) {
     throw new Error(message);
   }
 }
-
