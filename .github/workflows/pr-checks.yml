@@ -63,19 +63,17 @@ jobs:
             fi
             sleep 5
           done
-
           docker compose logs backend
           exit 1
 
       - name: Sembrar usuario para Cypress
         run: |
           set -e
-
           register_status=$(curl -s -o register-response.json -w "%{http_code}" \
             -X POST "http://localhost:8080/api/v1/auth/register" \
             -H "Content-Type: application/json" \
             -d '{"nombre":"Juan Pérez","email":"juan@gmail.com","password":"12345678"}')
-
+          
           if [ "$register_status" != "201" ] && [ "$register_status" != "409" ]; then
             cat register-response.json
             exit 1
@@ -120,7 +118,6 @@ jobs:
             fi
             sleep 5
           done
-
           docker compose -f Compra-tu-Hogar-backend/docker-compose.yml logs frontend
           exit 1
 
@@ -137,12 +134,23 @@ jobs:
             Compra-tu-Hogar-frontend/cypress/screenshots/
             Compra-tu-Hogar-frontend/cypress/videos/
 
+  sonarcloud-analysis:
+    name: SonarCloud Code Analysis
+    runs-on: ubuntu-latest
+    needs: cypress-e2e
+    steps:
+      - name: Checkout del frontend
+        uses: actions/checkout@v4
+        with:
+          path: Compra-tu-Hogar-frontend
+          fetch-depth: 0
+
       - name: Ejecutar SonarCloud
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
-           projectBaseDir: Compra-tu-Hogar-frontend
-           args: >
-             -Dsonar.projectKey=BautistaBracco_Compra-tu-Hogar-frontend
-             -Dsonar.organization=bautistabracco
+          projectBaseDir: Compra-tu-Hogar-frontend
+          args: >
+            -Dsonar.projectKey=BautistaBracco_Compra-tu-Hogar-frontend
+            -Dsonar.organization=bautistabracco
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
