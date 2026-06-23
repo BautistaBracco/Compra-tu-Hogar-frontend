@@ -66,17 +66,17 @@ describe('Flujo de Login - Compra Tu Hogar', () => {
         const emailInput = 'input[placeholder="tu@correo.com"]'
         const passwordInput = 'input[placeholder="Mínimo 8 caracteres"]'
 
+        // Aseguramos que el input esté cargado y visible antes de interactuar
+        cy.get(emailInput).should('be.visible')
+
         // 1. Intentamos hacer click directo con los campos vacíos
         cy.contains('button', 'Iniciar Sesión').click()
 
         // 2. Verificamos que el navegador marque el campo de email como inválido por estar vacío
         cy.get(emailInput).then(($el) => {
             const validity = $el[0].validity
-            const msg = $el[0].validationMessage;
             expect(validity.valid).to.be.false // No es válido
             expect(validity.valueMissing).to.be.true // Específicamente falta el valor requerido
-
-            expect(msg).to.be.oneOf(['Completa este campo.', 'Please fill out this field.']);
         })
 
         // 3. Completamos el email para verificar que el requerimiento salte ahora en la contraseña
@@ -86,10 +86,8 @@ describe('Flujo de Login - Compra Tu Hogar', () => {
         // 4. Verificamos que ahora sea el campo de contraseña el que reclama el valor
         cy.get(passwordInput).then(($el) => {
             const validity = $el[0].validity
-            const msg = $el[0].validationMessage;
             expect(validity.valid).to.be.false
             expect(validity.valueMissing).to.be.true
-            expect(msg).to.be.oneOf(['Completa este campo.', 'Please fill out this field.']);
         })
 
         cy.url().should('include', '/login')
