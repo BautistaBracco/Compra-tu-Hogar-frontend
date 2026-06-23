@@ -144,6 +144,5 @@ jobs:
            args: >
              -Dsonar.projectKey=BautistaBracco_Compra-tu-Hogar-frontend
              -Dsonar.organization=bautistabracco
-             -Dsonar.scanner.skipAutomaticAnalysis=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
