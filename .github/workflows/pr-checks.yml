@@ -136,9 +136,12 @@ jobs:
             Compra-tu-Hogar-frontend/cypress/videos/
 
       - name: Ejecutar SonarCloud
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
            projectBaseDir: Compra-tu-Hogar-frontend
+           args: >
+             -Dsonar.projectKey=Compra-tu-Hogar-frontend
+             -Dsonar.organization=BautistaBracco
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
