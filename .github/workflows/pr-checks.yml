@@ -145,7 +145,5 @@ jobs:
              -Dsonar.projectKey=BautistaBracco_Compra-tu-Hogar-frontend
              -Dsonar.organization=bautistabracco
              -Dsonar.scanner.skipAutomaticAnalysis=true
-             -Dsonar.analysis.mode=preview
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
