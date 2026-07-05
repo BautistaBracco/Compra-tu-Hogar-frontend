@@ -34,6 +34,9 @@ jobs:
         working-directory: Compra-tu-Hogar-frontend
         run: npm ci
 
+      - name: Instalar plugin de Loki para Docker
+        run: docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+
       - name: Levantar MySQL y backend con Docker Compose
         working-directory: Compra-tu-Hogar-backend
         env:
