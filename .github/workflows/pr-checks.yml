@@ -2,7 +2,7 @@ name: Frontend CI Checks
 
 on:
   push:
-    branches: [ "dev", "feat/arreglos-y-sonar" ]
+    branches: [ "dev", 'feature/*']
   pull_request:
     branches: [ "dev" ]
 
