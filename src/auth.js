@@ -648,3 +648,199 @@ export async function eliminarPublicacion(publicacion) {
     throw new Error(message);
   }
 }
+
+// ═══════════════════════════════════════════
+// ADMIN REPORT FUNCTIONS
+// ═══════════════════════════════════════════
+
+export async function obtenerResenasDeUsuario(usuarioId) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get(`/admin/reseñas/${usuarioId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener reseñas del usuario:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener reseñas';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerFavoritosPublicacion(publicacionId) {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get(`/admin/favoritos/${publicacionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener favoritos de la publicación:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener favoritos';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerFavoritosAdmin() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/favoritos', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener favoritos:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener favoritos';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerComprasAdmin() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/compras', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener compras:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener compras';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerUsuarios(rol = 'COMPRADOR') {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/usuarios', {
+      params: { rol },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener usuarios:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener usuarios';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerUsuarioPorId(usuarioId) {
+  if (!usuarioId) return null;
+  const roles = ['COMPRADOR', 'INMOBILIARIA', 'ADMINISTRADOR'];
+  try {
+    for (const rol of roles) {
+      try {
+        const usuarios = await obtenerUsuarios(rol);
+        const list = Array.isArray(usuarios) ? usuarios : (usuarios?.content || []);
+        const found = list.find((u) => String(u.id) === String(usuarioId));
+        if (found) return found;
+      } catch (e) {
+        // Si falla una consulta por rol, seguimos con el siguiente rol
+      }
+    }
+  } catch (err) {
+    console.error('Error al buscar usuario por id:', err);
+  }
+  return null;
+}
+
+export async function obtenerTopUsuarios() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/top-usuarios', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener top usuarios:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener ranking de usuarios';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerTopPublicaciones() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/top-publicaciones', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener top publicaciones:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener ranking de publicaciones';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerTopInmobiliarias() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/admin/top-inmobiliarias', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener top inmobiliarias:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener ranking de inmobiliarias';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerTodasLasResenias() {
+  try {
+    const token = getToken();
+    // Obtener todas las publicaciones
+    const publicaciones = await axiosInstance.get('/usuarios/publicaciones', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const pubs = Array.isArray(publicaciones.data) ? publicaciones.data : [];
+
+    // Para cada publicación, obtener sus reseñas
+    const resenasPromises = pubs.map(async (pub) => {
+      try {
+        const resenasRes = await axiosInstance.get(`/usuarios/publicaciones/${pub.id}/reseñas`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return Array.isArray(resenasRes.data) ? resenasRes.data : [];
+      } catch (e) {
+        // Si falla una publicación, retornar array vacío
+        return [];
+      }
+    });
+
+    const todasLasResenias = (await Promise.all(resenasPromises)).flat();
+    return todasLasResenias;
+  } catch (err) {
+    console.error('Error al obtener todas las reseñas:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener reseñas';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerVentasInmobiliaria() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/inmobiliaria/ventas', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener ventas:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener ventas';
+    throw new Error(message);
+  }
+}
+
+export async function obtenerClientesInmobiliaria() {
+  try {
+    const token = getToken();
+    const res = await axiosInstance.get('/inmobiliaria/clientes', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Error al obtener clientes:', err);
+    const message = err?.response?.data?.message || err.message || 'Error al obtener clientes';
+    throw new Error(message);
+  }
+}

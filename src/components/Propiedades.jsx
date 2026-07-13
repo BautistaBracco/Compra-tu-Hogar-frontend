@@ -43,6 +43,17 @@ export function Propiedades() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [successPropertyName, setSuccessPropertyName] = useState('');
 
+  // Filtros
+  const [filtros, setFiltros] = useState({
+    ubicacion: '',
+    tipo: '',
+    precioMin: '',
+    precioMax: '',
+    ambientes: '',
+    sanitarios: '',
+    superficie: '',
+  });
+
 
 
   const publicacionesAgrupadas = useMemo(() => {
@@ -62,12 +73,64 @@ export function Propiedades() {
       grupos.get(key).publicaciones.push(publicacion);
     });
 
-    return Array.from(grupos.values()).sort((a, b) => {
+    let gruposArray = Array.from(grupos.values());
+
+    if (filtros.ubicacion.trim()) {
+      const ubicacionBaja = filtros.ubicacion.toLowerCase();
+      gruposArray = gruposArray.filter((grupo) =>
+        String(grupo.propiedad?.ubicacion || '').toLowerCase().includes(ubicacionBaja)
+      );
+    }
+
+    if (filtros.tipo.trim()) {
+      gruposArray = gruposArray.filter((grupo) =>
+        String(grupo.propiedad?.tipo || '').toLowerCase() === filtros.tipo.toLowerCase()
+      );
+    }
+
+    if (filtros.precioMin) {
+      const minPrecio = Number(filtros.precioMin);
+      gruposArray = gruposArray.filter((grupo) => {
+        const pubs = grupo.publicaciones || [];
+        return pubs.some((pub) => Number(pub.precio) >= minPrecio);
+      });
+    }
+
+    if (filtros.precioMax) {
+      const maxPrecio = Number(filtros.precioMax);
+      gruposArray = gruposArray.filter((grupo) => {
+        const pubs = grupo.publicaciones || [];
+        return pubs.some((pub) => Number(pub.precio) <= maxPrecio);
+      });
+    }
+
+    if (filtros.ambientes) {
+      const ambientes = Number(filtros.ambientes);
+      gruposArray = gruposArray.filter((grupo) =>
+        Number(grupo.propiedad?.ambientes) === ambientes
+      );
+    }
+
+    if (filtros.sanitarios) {
+      const sanitarios = Number(filtros.sanitarios);
+      gruposArray = gruposArray.filter((grupo) =>
+        Number(grupo.propiedad?.sanitarios) === sanitarios
+      );
+    }
+
+    if (filtros.superficie) {
+      const superficie = Number(filtros.superficie);
+      gruposArray = gruposArray.filter((grupo) =>
+        Number(grupo.propiedad?.superficie) >= superficie
+      );
+    }
+
+    return gruposArray.sort((a, b) => {
       const aUbicacion = String(a.propiedad?.ubicacion || '').toLowerCase();
       const bUbicacion = String(b.propiedad?.ubicacion || '').toLowerCase();
       return aUbicacion.localeCompare(bUbicacion, 'es');
     });
-  }, [publicaciones]);
+  }, [publicaciones, filtros]);
 
   const patchPublication = (publicacionId, updater) => {
     setPublicaciones((prev) => prev.map((pub) => (pub.id === publicacionId ? updater(pub) : pub)));
@@ -81,15 +144,12 @@ export function Propiedades() {
       const data = await obtenerPublicaciones();
       setPublicaciones(Array.isArray(data) ? data : data?.content || []);
 
-      // no auto-seleccionamos; el detalle se muestra en su propia página
     } catch (err) {
       setError(err.message || 'No se pudieron cargar las publicaciones');
     } finally {
       setLoading(false);
     }
   };
-
-  // El detalle ahora se muestra en su propia ruta; no cargamos detalles aquí.
 
   useEffect(() => {
     void loadPublicaciones();
@@ -101,11 +161,31 @@ export function Propiedades() {
   const navigate = useNavigate();
 
   const selectPublication = (publicacion) => {
-    // Ahora navegamos a la página de detalle de la publicación
     navigate(`/propiedades/${publicacion.id}`);
   };
 
   const isPending = (type, id) => pendingAction.type === type && pendingAction.id === id;
+
+  const handleFiltroChange = (campo, valor) => {
+    setFiltros((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  };
+
+  const limpiarFiltros = () => {
+    setFiltros({
+      ubicacion: '',
+      tipo: '',
+      precioMin: '',
+      precioMax: '',
+      ambientes: '',
+      sanitarios: '',
+      superficie: '',
+    });
+  };
+
+  const tieneFiltrosActivos = Object.values(filtros).some((v) => v !== '');
 
   const toggleFavorito = async (publicacion) => {
     setPendingAction({ type: 'favorito', id: publicacion.id });
@@ -154,8 +234,6 @@ export function Propiedades() {
     }
   };
 
-  // Las acciones de reseñas ahora se manejan en la página de detalle
-
   return (
     <div className="properties-page">
       <header className="properties-header">
@@ -174,17 +252,136 @@ export function Propiedades() {
         </div>
       </header>
 
-      {(error || statusMessage) && (
+      {/* Filtros de búsqueda */}
+      <section className="properties-filters">
+        <div className="properties-filters-title">
+          <h3>Filtrar propiedades</h3>
+          {tieneFiltrosActivos && (
+            <button
+              type="button"
+              className="properties-filter-clear-btn"
+              onClick={limpiarFiltros}
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        <div className="properties-filters-grid">
+          <div className="properties-filter-group">
+            <label htmlFor="filter-ubicacion">Ubicación</label>
+            <input
+              id="filter-ubicacion"
+              type="text"
+              placeholder="Ej: San Isidro, Recoleta..."
+              value={filtros.ubicacion}
+              onChange={(e) => handleFiltroChange('ubicacion', e.target.value)}
+              className="properties-filter-input"
+            />
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-tipo">Tipo de propiedad</label>
+            <select
+              id="filter-tipo"
+              value={filtros.tipo}
+              onChange={(e) => handleFiltroChange('tipo', e.target.value)}
+              className="properties-filter-select"
+            >
+              <option value="">Todos los tipos</option>
+              <option value="casa">Casa</option>
+              <option value="depto">Departamento</option>
+            </select>
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-precio-min">Precio mínimo</label>
+            <input
+              id="filter-precio-min"
+              type="number"
+              placeholder="0"
+              value={filtros.precioMin}
+              onChange={(e) => handleFiltroChange('precioMin', e.target.value)}
+              className="properties-filter-input"
+              min="0"
+            />
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-precio-max">Precio máximo</label>
+            <input
+              id="filter-precio-max"
+              type="number"
+              placeholder="Ilimitado"
+              value={filtros.precioMax}
+              onChange={(e) => handleFiltroChange('precioMax', e.target.value)}
+              className="properties-filter-input"
+              min="0"
+            />
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-ambientes">Ambientes</label>
+            <select
+              id="filter-ambientes"
+              value={filtros.ambientes}
+              onChange={(e) => handleFiltroChange('ambientes', e.target.value)}
+              className="properties-filter-select"
+            >
+              <option value="">Cualquier cantidad</option>
+              <option value="1">1 ambiente</option>
+              <option value="2">2 ambientes</option>
+              <option value="3">3 ambientes</option>
+              <option value="4">4 ambientes</option>
+              <option value="5">5+ ambientes</option>
+            </select>
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-sanitarios">Baños</label>
+            <select
+              id="filter-sanitarios"
+              value={filtros.sanitarios}
+              onChange={(e) => handleFiltroChange('sanitarios', e.target.value)}
+              className="properties-filter-select"
+            >
+              <option value="">Cualquier cantidad</option>
+              <option value="1">1 baño</option>
+              <option value="2">2 baños</option>
+              <option value="3">3+ baños</option>
+            </select>
+          </div>
+
+          <div className="properties-filter-group">
+            <label htmlFor="filter-superficie">Superficie mínima (m²)</label>
+            <input
+              id="filter-superficie"
+              type="number"
+              placeholder="0"
+              value={filtros.superficie}
+              onChange={(e) => handleFiltroChange('superficie', e.target.value)}
+              className="properties-filter-input"
+              min="0"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Mensajes de estado */}
         <section className="properties-messages">
           {error && <div className="properties-error">{error}</div>}
           {statusMessage && <div className="properties-success">{statusMessage}</div>}
         </section>
-      )}
+
 
       {loading ? (
         <div className="properties-state-card">Cargando publicaciones...</div>
       ) : publicacionesAgrupadas.length === 0 ? (
-        <div className="properties-state-card">No hay publicaciones disponibles por el momento.</div>
+        <div className="properties-state-card">
+          {tieneFiltrosActivos
+            ? 'No hay propiedades que coincidan con los filtros seleccionados. Intenta ajustar tu búsqueda.'
+            : 'No hay publicaciones disponibles por el momento.'}
+        </div>
       ) : (
         <div className="properties-layout">
           <section className="properties-list">
@@ -312,7 +509,6 @@ export function Propiedades() {
             </div>
           )}
 
-          {/* El panel de detalle fue movido a la ruta individual de publicación */}
         </div>
       )}
     </div>

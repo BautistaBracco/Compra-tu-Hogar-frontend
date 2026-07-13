@@ -372,6 +372,15 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
   display: grid;
   gap: var(--spacing-lg);
   margin-top: var(--spacing-lg);
+  min-height: 400px;
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: var(--gray-600);
 }
 
 .publication-card {
@@ -496,19 +505,32 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
 
 .characteristic-selector {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
 
 .characteristic-option {
   display: flex;
-  gap: var(--spacing-md);
-  align-items: flex-start;
+  align-items: center;
+  gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--border-radius-md);
-  background-color: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius-lg);
+  background-color: var(--white);
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Efecto Hover */
+.characteristic-option:hover {
+  border-color: var(--success-color);
+  background-color: #f0fdf4;
+}
+
+.characteristic-option.active {
+  border-color: var(--success-color);
+  background-color: #ecfdf5;
 }
 
 .characteristic-option.locked {
@@ -519,7 +541,10 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
 }
 
 .characteristic-option input {
-  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--success-color);
+  cursor: pointer;
 }
 
 .characteristic-option.locked strong,
@@ -613,11 +638,10 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
   background: rgba(17, 24, 39, 0.9);
 }
 
-/* ...existing code... */
-
 .characteristic-option strong {
-  display: block;
-  color: var(--gray-900);
+  font-size: var(--font-size-sm);
+  color: var(--gray-800);
+  margin: 0;
 }
 
 .characteristic-option small {
@@ -718,3 +742,74 @@ body.panel-inmobiliaria-no-scrollbar::-webkit-scrollbar {
   color: inherit !important;
 }
 
+.inmobiliaria-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 95%;
+}
+
+.inmobiliaria-section {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: var(--spacing-2xl);
+  min-height: auto;
+}
+
+.inmobiliaria-section:has(.publication-list),
+.inmobiliaria-section:has(.empty-state) {
+  grid-template-columns: 1fr;
+  min-height: 600px;
+}
+
+.inmobiliaria-section:has(.publication-list) .inmobiliaria-card,
+.inmobiliaria-section:has(.empty-state) .inmobiliaria-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.publication-list,
+.empty-state {
+  flex: 1;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--gray-200);
+  background-color: var(--gray-50);
+}
+
+.inmobiliaria-table-container {
+  overflow-x: auto;
+  margin-top: var(--spacing-lg);
+}
+
+.inmobiliaria-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inmobiliaria-table-container thead {
+  background-color: var(--gray-100);
+}
+
+.inmobiliaria-table-container th {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-900);
+  border-bottom: 2px solid var(--gray-300);
+}
+
+.inmobiliaria-table-container td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--gray-700);
+}
+
+.inmobiliaria-table-container tr:hover {
+  background-color: var(--gray-50);
+}

@@ -143,14 +143,18 @@ body.panel-admin-no-scrollbar::-webkit-scrollbar {
    ════════════════════════════════════════════════════════════════ */
 
 .admin-content {
-  max-width: 1200px;
+  max-width: 1400px; /* Aumenta este valor (o ponlo en 95% para que sea fluido) */
   margin: 0 auto;
+  width: 95%; /* Agregado para mejor adaptabilidad */
 }
 
 .admin-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Esto permite que las secciones normales sigan teniendo 2 columnas,
+     pero que el contenedor de rankings (o secciones similares) se adapte mejor */
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: var(--spacing-2xl);
+  align-items: start;
 }
 
 @media (max-width: 968px) {
@@ -163,7 +167,7 @@ body.panel-admin-no-scrollbar::-webkit-scrollbar {
   background-color: var(--white);
   border-radius: var(--border-radius-xl);
   box-shadow: var(--shadow-lg);
-  padding: var(--spacing-2xl);
+  padding: 40px; /* Aumenta el padding interno para dar sensación de mayor tamaño */
 }
 
 .admin-card h2 {
@@ -357,4 +361,39 @@ body.panel-admin-no-scrollbar::-webkit-scrollbar {
   margin: 0;
   color: var(--gray-600);
   font-size: var(--font-size-sm);
+}
+
+.admin-section .admin-card:first-child {
+  padding: 1.5rem;
+  height: fit-content;
+}
+
+.admin-section .admin-form {
+  gap: 1rem;
+}
+
+.admin-section {
+  align-items: start;
+}
+
+.rankings-grid .admin-card {
+  margin: 0;
+}
+
+/* Nuevo contenedor que reemplaza a admin-section en rankings */
+.rankings-full-width-container {
+  width: 100%;
+}
+
+.rankings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .rankings-grid {
+    grid-template-columns: 1fr;
+  }
 }

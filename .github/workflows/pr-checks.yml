@@ -2,7 +2,7 @@ name: Frontend CI Checks
 
 on:
   push:
-    branches: [ "dev", "feat/arreglos-y-sonar" ]
+    branches: [ "dev", 'feature/*']
   pull_request:
     branches: [ "dev" ]
 
@@ -33,6 +33,9 @@ jobs:
       - name: Instalar dependencias del frontend
         working-directory: Compra-tu-Hogar-frontend
         run: npm ci
+
+      - name: Instalar plugin de Loki para Docker
+        run: docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 
       - name: Levantar MySQL y backend con Docker Compose
         working-directory: Compra-tu-Hogar-backend

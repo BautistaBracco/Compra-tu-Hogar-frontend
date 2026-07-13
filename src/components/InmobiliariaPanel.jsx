@@ -8,6 +8,8 @@ import {
   obtenerCaracteristicas,
   obtenerPropiedadPorUbicacion,
   obtenerPublicaciones,
+  obtenerVentasInmobiliaria,
+  obtenerClientesInmobiliaria,
 } from '../auth';
 import '../styles/components/inmobiliaria.css';
 
@@ -158,6 +160,60 @@ export function InmobiliariaPanel() {
   const [caracteristicas, setCaracteristicas] = useState([]);
   const [caracteristicasLoading, setCaracteristicasLoading] = useState(false);
   const [caracteristicasError, setCaracteristicasError] = useState('');
+
+  // Clientes
+  const [clientes, setClientes] = useState([]);
+  const [clientesLoading, setClientesLoading] = useState(false);
+  const [clientesError, setClientesError] = useState('');
+
+  // Ventas
+  const [ventas, setVentas] = useState([]);
+  const [ventasLoading, setVentasLoading] = useState(false);
+  const [ventasError, setVentasError] = useState('');
+
+  // Cargar clientes
+  useEffect(() => {
+    if (activeTab === 'clientes') {
+      obtenerClientes();
+    }
+  }, [activeTab]);
+
+  // Cargar ventas
+  useEffect(() => {
+    if (activeTab === 'ventas') {
+      obtenerVentas();
+    }
+  }, [activeTab]);
+
+  // Handlers para Clientes
+  const obtenerClientes = async () => {
+    setClientesLoading(true);
+    setClientesError('');
+    try {
+      const data = await obtenerClientesInmobiliaria();
+      setClientes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error:', err);
+      setClientesError(err.message);
+    } finally {
+      setClientesLoading(false);
+    }
+  };
+
+  // Handlers para Ventas
+  const obtenerVentas = async () => {
+    setVentasLoading(true);
+    setVentasError('');
+    try {
+      const data = await obtenerVentasInmobiliaria();
+      setVentas(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error:', err);
+      setVentasError(err.message);
+    } finally {
+      setVentasLoading(false);
+    }
+  };
 
   const [publicationForm, setPublicationForm] = useState(buildInitialPublicationFormState());
   const [lookupState, setLookupState] = useState({
@@ -602,6 +658,16 @@ export function InmobiliariaPanel() {
         >
           Crear / Editar
         </button>
+
+        <button
+            className={`inmobiliaria-tab ${activeTab === 'clientes' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('clientes')}}
+        >Clientes</button>
+
+        <button
+            className={`inmobiliaria-tab ${activeTab === 'ventas' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('ventas')}}
+        >Ventas</button>
       </div>
 
       <div className="inmobiliaria-content">
@@ -667,90 +733,92 @@ export function InmobiliariaPanel() {
                 <p>publicaciones encontradas</p>
               </div>
 
-              {publicacionesLoading ? (
-                <p>Cargando publicaciones...</p>
-              ) : publicaciones.length > 0 ? (
-                <div className="publication-list">
-                  {publicaciones.map((publicacion) => {
-                    const propiedad = publicacion.propiedad || {};
-                    const imagenPrincipal = Array.isArray(publicacion.imagenes) && publicacion.imagenes.length > 0
-                      ? publicacion.imagenes[0]
-                      : null;
-                    const caracteristicasPublicacion = Array.isArray(propiedad.caracteristicas)
-                      ? propiedad.caracteristicas
-                      : Array.isArray(propiedad.caracteristicas?.content)
-                        ? propiedad.caracteristicas.content
-                        : Array.from(propiedad.caracteristicas || []);
+              <div className="publication-list">
+                {publicacionesLoading ? (
+                    <div className="empty-state">
+                      <p>Cargando publicaciones...</p>
+                    </div>
+                ) : publicaciones.length > 0 ? (
+                    publicaciones.map((publicacion) => {
+                      const propiedad = publicacion.propiedad || {};
+                      const imagenPrincipal = Array.isArray(publicacion.imagenes) && publicacion.imagenes.length > 0
+                          ? publicacion.imagenes[0]
+                          : null;
+                      const caracteristicasPublicacion = Array.isArray(propiedad.caracteristicas)
+                          ? propiedad.caracteristicas
+                          : Array.isArray(propiedad.caracteristicas?.content)
+                              ? propiedad.caracteristicas.content
+                              : Array.from(propiedad.caracteristicas || []);
 
-                    return (
-                      <article key={publicacion.id} className="publication-card">
-                        <div className="publication-media">
-                          {imagenPrincipal ? (
-                            <img src={imagenPrincipal} alt={publicacion.descripcion || 'Publicación'} />
-                          ) : (
-                            <div className="publication-media-empty">Sin imagen</div>
-                          )}
-                        </div>
-
-                        <div className="publication-body">
-                          <div className="publication-head">
-                            <div>
-                              <span className="publication-id">#{publicacion.id}</span>
-                              <h3>{publicacion.descripcion}</h3>
+                      return (
+                          <article key={publicacion.id} className="publication-card">
+                            <div className="publication-media">
+                              {imagenPrincipal ? (
+                                  <img src={imagenPrincipal} alt={publicacion.descripcion || 'Publicación'} />
+                              ) : (
+                                  <div className="publication-media-empty">Sin imagen</div>
+                              )}
                             </div>
-                            <strong className="inmobiliaria-publication-price">{formatCurrency(publicacion.precio)}</strong>
-                          </div>
 
-                          <div className="publication-meta">
-                            <span>{propiedad.tipo || '-'}</span>
-                            <span>{propiedad.ubicacion || '-'}</span>
-                            <span>{propiedad.piso || 'PB'}</span>
-                            <span>{propiedad.depto || '-'}</span>
-                          </div>
+                            <div className="publication-body">
+                              <div className="publication-head">
+                                <div>
+                                  <span className="publication-id">#{publicacion.id}</span>
+                                  <h3>{publicacion.descripcion}</h3>
+                                </div>
+                                <strong className="inmobiliaria-publication-price">{formatCurrency(publicacion.precio)}</strong>
+                              </div>
 
-                          <div className="publication-stats">
-                            <span>{propiedad.superficie ?? '-'} m²</span>
-                            <span>{propiedad.ambientes ?? '-'} ambientes</span>
-                            <span>{propiedad.sanitarios ?? '-'} sanitarios</span>
-                            <span>Expensas: {formatCurrency(propiedad.expensas ?? 0)}</span>
-                          </div>
+                              <div className="publication-meta">
+                                <span>{propiedad.tipo || '-'}</span>
+                                <span>{propiedad.ubicacion || '-'}</span>
+                                <span>{propiedad.piso || 'PB'}</span>
+                                <span>{propiedad.depto || '-'}</span>
+                              </div>
 
-                          {Array.isArray(caracteristicasPublicacion) && caracteristicasPublicacion.length > 0 && (
-                            <div className="characteristic-chips">
-                              {caracteristicasPublicacion.map((caracteristica) => (
-                                <span key={caracteristica} className="characteristic-chip">
-                                  {caracteristica}
-                                </span>
-                              ))}
+                              <div className="publication-stats">
+                                <span>{propiedad.superficie ?? '-'} m²</span>
+                                <span>{propiedad.ambientes ?? '-'} ambientes</span>
+                                <span>{propiedad.sanitarios ?? '-'} sanitarios</span>
+                                <span>Expensas: {formatCurrency(propiedad.expensas ?? 0)}</span>
+                              </div>
+
+                              {Array.isArray(caracteristicasPublicacion) && caracteristicasPublicacion.length > 0 && (
+                                  <div className="characteristic-chips">
+                                    {caracteristicasPublicacion.map((caracteristica) => (
+                                        <span key={caracteristica} className="characteristic-chip">
+                          {caracteristica}
+                        </span>
+                                    ))}
+                                  </div>
+                              )}
+
+                              <div className="publication-actions">
+                                <button
+                                    type="button"
+                                    className="inmobiliaria-primary-button"
+                                    onClick={() => prepararEdicion(publicacion)}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                    type="button"
+                                    className="inmobiliaria-danger-button"
+                                    onClick={() => handleEliminar(publicacion)}
+                                >
+                                  Eliminar
+                                </button>
+                              </div>
                             </div>
-                          )}
-
-                          <div className="publication-actions">
-                            <button
-                              type="button"
-                              className="inmobiliaria-primary-button"
-                              onClick={() => prepararEdicion(publicacion)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              className="inmobiliaria-danger-button"
-                              onClick={() => handleEliminar(publicacion)}
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p>No hay publicaciones registradas aún.</p>
-                </div>
-              )}
+                          </article>
+                      );
+                    })
+                ) : (
+                    <div className="empty-state">
+                      <p>No hay publicaciones registradas aún.</p>
+                    </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1097,8 +1165,84 @@ export function InmobiliariaPanel() {
             </div>
           </div>
         )}
+
+        {activeTab === 'clientes' && (
+            <div className="inmobiliaria-section" style={{ gridTemplateColumns: '1fr' }}>
+              <div className="inmobiliaria-card">
+                <h2>Listado de Clientes</h2>
+
+                {clientesLoading ? (
+                    <div className="empty-state"><p>Cargando clientes...</p></div>
+                ) : clientes.length > 0 ? (
+                    <div className="inmobiliaria-table-container">
+                      <table>
+                        <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Nombre</th>
+                          <th>Email</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {clientes.map((c) => (
+                            <tr key={c.id}>
+                              <td>{c.id}</td>
+                              <td>{c.nombre}</td>
+                              <td>{c.email}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </div>
+                ) : (
+                    <div className="empty-state"><p>No hay clientes registrados.</p>
+                    </div>
+                )}
+                {clientesError && <div className="form-error">{clientesError}</div>}
+              </div>
+            </div>
+        )}
+
+        {activeTab === 'ventas' && (
+            <div className="inmobiliaria-section" style={{ gridTemplateColumns: '1fr' }}>
+              <div className="inmobiliaria-card">
+                <h2>Ventas Realizadas</h2>
+
+                {ventasLoading ? (
+                    <div className="empty-state"><p>Cargando ventas...</p></div>
+                ) : ventas.length > 0 ? (
+                    <div className="inmobiliaria-table-container">
+                      <table>
+                        <thead>
+                        <tr>
+                          <th>ID Publicación</th>
+                          <th>Precio Final</th>
+                          <th>Fecha</th>
+                          <th>Comprador</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {ventas.map((v) => (
+                            <tr key={v.id}>
+                              <td>{v.publicacion?.id || 'N/A'}</td>
+                              <td>${v.precioFinal?.toLocaleString() || 'N/A'}</td>
+                              <td>{v.fechaCompra ? new Date(v.fechaCompra).toLocaleDateString() : 'N/A'}</td>
+                              <td>{v.comprador?.nombre || 'Anónimo'}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </div>
+                ) : (
+                    <div className="empty-state"><p>No hay ventas registradas.</p></div>
+                )}
+                {ventasError && <div className="form-error">{ventasError}</div>}
+              </div>
+            </div>
+        )}
       </div>
-    </div>
+
+      </div>
   );
 }
 
