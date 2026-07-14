@@ -36,16 +36,16 @@ describe('Flujo de Registro - Compra Tu Hogar', () => {
     it('Debería validar los campos requeridos nativos si se envía vacío', () => {
         const nameInput = 'input[placeholder="Juan Pérez"]'
 
-        // Intentamos enviar el formulario vacío
+        // Nos aseguramos que el formulario cargó antes de clickear
+        cy.get(nameInput).should('be.visible')
         cy.contains('button', 'Crear Cuenta').click()
 
         // El primer campo vacío (Nombre) debería saltar como inválido
         cy.get(nameInput).then(($el) => {
             const validity = $el[0].validity
-            const msg = $el[0].validationMessage;
+            // Validamos la lógica nativa del elemento (así evitamos problemas de acentos/idiomas del navegador)
             expect(validity.valid).to.be.false
             expect(validity.valueMissing).to.be.true
-            expect(msg).to.be.oneOf(['Completa este campo.', 'Please fill out this field.']);
         })
 
         cy.url().should('include', '/register')
@@ -102,7 +102,12 @@ describe('Flujo de Registro - Compra Tu Hogar', () => {
         // Se usa el mail registrado en la base de datos
         const emailExistente = 'juan@gmail.com'
 
-        cy.get('input[placeholder="Juan Pérez"]').type('Juan Duplicado')
+        // Agregamos una espera explícita a que no esté deshabilitado por si la app local tarda en responder
+        cy.get('input[placeholder="Juan Pérez"]')
+            .should('be.visible')
+            .and('not.be.disabled')
+            .type('Juan Duplicado')
+
         cy.get('input[placeholder="tu@correo.com"]').type(emailExistente)
         cy.get('input[placeholder="Mínimo 8 caracteres"]').type('12345678')
         cy.get('input[placeholder="Repite tu contraseña"]').type('12345678')

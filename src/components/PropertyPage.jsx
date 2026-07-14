@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   agregarFavorito,
   agregarResena,
@@ -42,6 +42,7 @@ export default function PropertyPage() {
   const [resenas, setResenas] = useState([]);
   const [reviewForm, setReviewForm] = useState(initialReviewForm);
   const [pending, setPending] = useState({ type: '', id: null });
+  const [message, setMessage] = useState('');
 
   const userId = Number(getUserId() || 0);
 
@@ -72,7 +73,11 @@ export default function PropertyPage() {
       const sorted = filtered.slice().sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0));
 
       setPublicaciones(sorted);
-      setSelectedOfferId(sorted[0]?.id ?? null);
+      if (offerIdFromUrl && sorted.some(p => String(p.id) === String(offerIdFromUrl))) {
+        setSelectedOfferId(Number(offerIdFromUrl));
+      } else {
+        setSelectedOfferId(sorted[0]?.id ?? null);
+      }
     } catch (err) {
       setError(err.message || 'No se pudieron cargar las publicaciones');
     } finally {
@@ -84,6 +89,18 @@ export default function PropertyPage() {
     void loadOffers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const [searchParams] = useSearchParams();
+  const offerIdFromUrl = searchParams.get("offerId");
+
+  useEffect(() => {
+    if (publicaciones.length > 0 && offerIdFromUrl) {
+      const ofertaEncontrada = publicaciones.find(p => String(p.id) === String(offerIdFromUrl));
+      if (ofertaEncontrada) {
+        setSelectedOfferId(ofertaEncontrada.id);
+      }
+    }
+  }, [publicaciones, offerIdFromUrl]);
 
   useEffect(() => {
     if (!selectedOfferId) {
@@ -129,9 +146,15 @@ export default function PropertyPage() {
 
     setPending({ type: 'comprar', id: selectedOffer.id });
     setError('');
+    setMessage('');
+
     try {
       await comprarPublicacion(selectedOffer.id);
       await loadOffers();
+      const detalleActualizado = await obtenerPublicacionPorId(selectedOffer.id);
+
+      setSelectedOffer(detalleActualizado);
+      setMessage('¡Compra realizada con éxito!');
     } catch (err) {
       setError(err.message || 'No se pudo completar la compra');
     } finally {
@@ -208,323 +231,323 @@ export default function PropertyPage() {
   const fixedTitle = property.tipo ? `${property.tipo} en ${property.ubicacion}` : (property.ubicacion || 'Propiedad');
   const hasMultipleOffers = offers.length > 1;
   const priceLabel = priceRange.min != null && priceRange.max != null
-    ? (priceRange.min === priceRange.max ? formatCurrency(priceRange.min) : `${formatCurrency(priceRange.min)} - ${formatCurrency(priceRange.max)}`)
-    : 'Precio no disponible';
+      ? (priceRange.min === priceRange.max ? formatCurrency(priceRange.min) : `${formatCurrency(priceRange.min)} - ${formatCurrency(priceRange.max)}`)
+      : 'Precio no disponible';
   const expensasValue = Number(selectedOffer?.propiedad?.expensas);
   const showExpensas = Number.isFinite(expensasValue) && expensasValue > 0;
 
-  // Formateo correcto singular/plural para la línea corta (subtítulo)
   const ambientesNum = property.ambientes != null && property.ambientes !== '' ? Number(property.ambientes) : null;
   const sanitariosNum = property.sanitarios != null && property.sanitarios !== '' ? Number(property.sanitarios) : null;
   const ambientesShort = ambientesNum == null ? '—' : (Number.isFinite(ambientesNum) ? `${ambientesNum} ${ambientesNum === 1 ? 'ambiente' : 'ambientes'}` : String(property.ambientes));
   const sanitariosShort = sanitariosNum == null ? '—' : (Number.isFinite(sanitariosNum) ? `${sanitariosNum} ${sanitariosNum === 1 ? 'baño' : 'baños'}` : String(property.sanitarios));
 
   return (
-    <div className="properties-page properties-page-detail">
-      <header className="properties-header properties-header-detail">
-        <div className="properties-header-copy">
-          <p className="properties-eyebrow">Propiedad</p>
-          <h1 className="properties-title">{fixedTitle}</h1>
-          <p className="properties-subtitle">
-            {property.superficie
-              ? `${property.superficie} m² · ${ambientesShort} · ${sanitariosShort}`
-              : 'Datos generales de la propiedad'}
-          </p>
-        </div>
+      <div className="properties-page properties-page-detail">
+        <header className="properties-header properties-header-detail">
+          <div className="properties-header-copy">
+            <p className="properties-eyebrow">Propiedad</p>
+            <h1 className="properties-title">{fixedTitle}</h1>
+            <p className="properties-subtitle">
+              {property.superficie
+                  ? `${property.superficie} m² · ${ambientesShort} · ${sanitariosShort}`
+                  : 'Datos generales de la propiedad'}
+            </p>
+          </div>
 
-        <div className="properties-header-actions">
-          <button type="button" className="properties-back-link" onClick={() => navigate('/propiedades')}>
-            Volver a resultados
-          </button>
-        </div>
-      </header>
+          <div className="properties-header-actions">
+            <button type="button" className="properties-back-link" onClick={() => navigate('/propiedades')}>
+              Volver a resultados
+            </button>
+          </div>
+        </header>
 
-      {error && (
-        <section className="properties-messages">
-          <div className="properties-error">{error}</div>
-        </section>
-      )}
-
-      <div className="property-detail-shell">
-        <section className="property-overview-card property-surface-card">
-          <div className="property-overview-top">
-            <div>
-              <p className="properties-eyebrow">Datos generales</p>
-              <h2 className="properties-section-title">Resumen de la propiedad</h2>
+        <div className="property-detail-shell">
+          <section className="property-overview-card property-surface-card">
+            <div className="property-overview-top">
+              <div>
+                <p className="properties-eyebrow">Datos generales</p>
+                <h2 className="properties-section-title">Resumen de la propiedad</h2>
+              </div>
+              <div className={`property-price-range ${hasMultipleOffers ? '' : 'property-price-range--single'}`}>
+                <span className="property-price-range-label">{hasMultipleOffers ? 'Rango de precios' : 'Precio'}</span>
+                <strong>{priceLabel}</strong>
+              </div>
             </div>
-            <div className={`property-price-range ${hasMultipleOffers ? '' : 'property-price-range--single'}`}>
-              <span className="property-price-range-label">{hasMultipleOffers ? 'Rango de precios' : 'Precio'}</span>
-              <strong>{priceLabel}</strong>
+
+            <div className="property-overview-grid">
+              <div className="property-overview-item"><span>M²</span><strong>{property.superficie ?? '—'}</strong></div>
+              <div className="property-overview-item"><span>Ambientes</span><strong>{property.ambientes ?? '—'}</strong></div>
+              <div className="property-overview-item"><span>Baños</span><strong>{property.sanitarios ?? '—'}</strong></div>
+              <div className="property-overview-item"><span>Ubicación</span><strong>{property.ubicacion || '—'}</strong></div>
+              <div className="property-overview-item"><span>Piso</span><strong>{property.piso || '—'}</strong></div>
+              <div className="property-overview-item"><span>Depto</span><strong>{property.depto || '—'}</strong></div>
             </div>
-          </div>
+          </section>
 
-          <div className="property-overview-grid">
-            <div className="property-overview-item"><span>M²</span><strong>{property.superficie ?? '—'}</strong></div>
-            <div className="property-overview-item"><span>Ambientes</span><strong>{property.ambientes ?? '—'}</strong></div>
-            <div className="property-overview-item"><span>Baños</span><strong>{property.sanitarios ?? '—'}</strong></div>
-            <div className="property-overview-item"><span>Ubicación</span><strong>{property.ubicacion || '—'}</strong></div>
-            <div className="property-overview-item"><span>Piso</span><strong>{property.piso || '—'}</strong></div>
-            <div className="property-overview-item"><span>Depto</span><strong>{property.depto || '—'}</strong></div>
-          </div>
-        </section>
-
-        <section className="property-offers-strip">
-          <div className="property-section-heading">
-            <div>
-              <p className="properties-eyebrow">Selector de ofertas</p>
-              <h2 className="properties-section-title">Elegí la inmobiliaria</h2>
+          <section className="property-offers-strip">
+            <div className="property-section-heading">
+              <div>
+                <p className="properties-eyebrow">Selector de ofertas</p>
+                <h2 className="properties-section-title">Elegí la inmobiliaria</h2>
+              </div>
+              <p className="property-section-hint">Al cambiar de oferta se actualizan fotos, precio, descripción y contacto.</p>
             </div>
-            <p className="property-section-hint">Al cambiar de oferta se actualizan fotos, precio, descripción y contacto.</p>
-          </div>
 
-          <div className="offers-selector">
-            {offers.map((offer) => {
-              const isActive = String(offer.id) === String(selectedOfferId);
-              const thumb = Array.isArray(offer.imagenes) ? offer.imagenes[0] : '';
+            <div className="offers-selector">
+              {offers.map((offer) => {
+                const isActive = String(offer.id) === String(selectedOfferId);
+                const thumb = Array.isArray(offer.imagenes) ? offer.imagenes[0] : '';
 
-              return (
-                <button
-                  key={offer.id}
-                  type="button"
-                  className={`offer-tab ${isActive ? 'active' : ''}`}
-                  onClick={() => selectOffer(offer.id)}
-                >
-                  <div className="offer-thumb">
-                    {thumb ? <img src={thumb} alt={`Oferta ${offer.id}`} /> : <div className="publication-image-placeholder">Sin imagen</div>}
-                  </div>
-
-                  <div className="offer-info">
-                    <div className="offer-agent">{offer.inmobiliaria?.nombre || 'Inmobiliaria'}</div>
-                    <div className="offer-price">{formatCurrency(offer.precio)}</div>
-                    <div className="offer-meta">{offer.metadata.esFavorito? 'En favoritos' : 'Ver oferta'}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <div className="property-detail-grid">
-          <main className="property-main-column">
-            <section className="property-gallery-card property-surface-card">
-              <div className="property-gallery-hero">
-                <div className="publication-image-wrap property-gallery-main property-media property-media--hero">
-                  {currentImage ? (
-                    <img src={currentImage} alt={`Publicación ${selectedOffer?.id}`} className="publication-image" />
-                  ) : (
-                    <div className="publication-image-placeholder">Sin imagen</div>
-                  )}
-
-                  {currentImages.length > 1 && (
-                    <>
-                      <div className="property-gallery-nav" aria-label="Navegación de imágenes">
-                        <button
-                          type="button"
-                          className="property-gallery-arrow"
-                          onClick={handlePrevImage}
-                          aria-label="Imagen anterior"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          type="button"
-                          className="property-gallery-arrow"
-                          onClick={handleNextImage}
-                          aria-label="Imagen siguiente"
-                        >
-                          ›
-                        </button>
+                return (
+                    <button
+                        key={offer.id}
+                        type="button"
+                        className={`offer-tab ${isActive ? 'active' : ''}`}
+                        onClick={() => selectOffer(offer.id)}
+                    >
+                      <div className="offer-thumb">
+                        {thumb ? <img src={thumb} alt={`Oferta ${offer.id}`} /> : <div className="publication-image-placeholder">Sin imagen</div>}
                       </div>
-                      <span className="property-gallery-counter">
+
+                      <div className="offer-info">
+                        <div className="offer-agent">{offer.inmobiliaria?.nombre || 'Inmobiliaria'}</div>
+                        <div className="offer-price">{formatCurrency(offer.precio)}</div>
+                        <div className="offer-meta">{offer.metadata.esFavorito? 'En favoritos' : 'Ver oferta'}</div>
+                      </div>
+                    </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <div className="property-detail-grid">
+            <main className="property-main-column">
+              <section className="property-gallery-card property-surface-card">
+                <div className="property-gallery-hero">
+                  <div className="publication-image-wrap property-gallery-main property-media property-media--hero">
+                    {currentImage ? (
+                        <img src={currentImage} alt={`Publicación ${selectedOffer?.id}`} className="publication-image" />
+                    ) : (
+                        <div className="publication-image-placeholder">Sin imagen</div>
+                    )}
+
+                    {currentImages.length > 1 && (
+                        <>
+                          <div className="property-gallery-nav" aria-label="Navegación de imágenes">
+                            <button
+                                type="button"
+                                className="property-gallery-arrow"
+                                onClick={handlePrevImage}
+                                aria-label="Imagen anterior"
+                            >
+                              ‹
+                            </button>
+                            <button
+                                type="button"
+                                className="property-gallery-arrow"
+                                onClick={handleNextImage}
+                                aria-label="Imagen siguiente"
+                            >
+                              ›
+                            </button>
+                          </div>
+                          <span className="property-gallery-counter">
                         {selectedImageIndex + 1}/{currentImages.length}
                       </span>
-                    </>
-                  )}
+                        </>
+                    )}
 
-                  <div className="publication-price publication-price-large">{formatCurrency(selectedOffer?.precio)}</div>
-                </div>
-              </div>
-
-              <div className="property-gallery-meta">
-                <span className="property-gallery-agent">{selectedOfferName}</span>
-                <span className="property-gallery-copy">
-                  {offers.length > 1
-                    ? `Disponible con ${offers.length} inmobiliarias (ver opciones y fotos)`
-                    : 'Disponible con una inmobiliaria'}
-                </span>
-              </div>
-
-              {/* La navegación de imágenes se hace con flechas en la parte superior */}
-            </section>
-
-            <section className="property-description-card property-surface-card">
-              <div className="property-section-heading">
-                <div>
-                  <p className="properties-eyebrow">Descripción de la publicación</p>
-                  <h2 className="properties-section-title">Contenido dinámico de la oferta</h2>
-                </div>
-                <p className="property-section-hint">Esta descripción cambia según la inmobiliaria seleccionada.</p>
-              </div>
-
-              <p className="property-description-text">
-                {selectedOffer?.descripcion || 'Sin descripción disponible.'}
-              </p>
-
-              {showExpensas && (
-                <div className="property-overview-item property-overview-item--compact property-overview-item--expensas">
-                  <span>Expensas</span>
-                  <strong>{formatCurrency(expensasValue)}</strong>
-                </div>
-              )}
-
-              {Array.isArray(selectedOffer?.propiedad?.caracteristicas) && selectedOffer.propiedad.caracteristicas.length > 0 && (
-                <div className="properties-detail-section properties-detail-section--characteristics">
-                  <p className="properties-eyebrow">Características incluidas</p>
-                  <div className="characteristics-list">
-                    {selectedOffer.propiedad.caracteristicas.map((caracteristica, index) => (
-                      <span key={index} className="characteristic-chip">
-                        {caracteristica}
-                      </span>
-                    ))}
+                    <div className="publication-price publication-price-large">{formatCurrency(selectedOffer?.precio)}</div>
                   </div>
                 </div>
-              )}
 
-              <div className="property-contact-grid property-contact-grid--offer-summary">
-                <div className="property-contact-card">
-                  <span>Inmobiliaria</span>
-                  <strong>{selectedOffer?.inmobiliaria?.nombre || '—'}</strong>
+                <div className="property-gallery-meta">
+                  <span className="property-gallery-agent">{selectedOfferName}</span>
+                  <span className="property-gallery-copy">
+                  {offers.length > 1
+                      ? `Disponible con ${offers.length} inmobiliarias (ver opciones y fotos)`
+                      : 'Disponible con una inmobiliaria'}
+                </span>
                 </div>
-                <div className="property-contact-card">
-                  <span>Precio de esta oferta</span>
-                  <strong>{formatCurrency(selectedOffer?.precio)}</strong>
-                </div>
-                <div className="property-contact-card">
-                  <span>Estado</span>
-                  <strong>{selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Disponible'}</strong>
-                </div>
-              </div>
-            </section>
+              </section>
 
-            <section className="property-reviews-card property-surface-card">
-              <div className="property-section-heading">
-                <div>
-                  <p className="properties-eyebrow">Comentarios y puntaje</p>
-                  <h2 className="properties-section-title">Reseñas de esta oferta</h2>
+              <section className="property-description-card property-surface-card">
+                <div className="property-section-heading">
+                  <div>
+                    <p className="properties-eyebrow">Descripción de la publicación</p>
+                    <h2 className="properties-section-title">Contenido dinámico de la oferta</h2>
+                  </div>
+                  <p className="property-section-hint">Esta descripción cambia según la inmobiliaria seleccionada.</p>
                 </div>
-              </div>
 
-              {resenas.length > 0 ? (
-                <div className="reviews-list">
-                  {resenas.map((resena) => (
-                    <article key={resena.id} className="review-card">
-                      <div className="review-card-header">
-                        <div className="review-card-author">
-                          <strong>{resena.autorNombre}</strong>
-                          <span className="review-card-rating">⭐ {resena.puntaje}/10</span>
-                        </div>
+                <p className="property-description-text">
+                  {selectedOffer?.descripcion || 'Sin descripción disponible.'}
+                </p>
 
-                        {Number(resena.autorId) === userId && (
-                          <button
-                            type="button"
-                            className="review-delete-button"
-                            onClick={() => handleDeleteResena(resena)}
-                            disabled={pending.type === 'borrar-reseña'}
-                          >
-                            {pending.type === 'borrar-reseña' ? 'Borrando...' : 'Borrar'}
-                          </button>
-                        )}
+                {showExpensas && (
+                    <div className="property-overview-item property-overview-item--compact property-overview-item--expensas">
+                      <span>Expensas</span>
+                      <strong>{formatCurrency(expensasValue)}</strong>
+                    </div>
+                )}
+
+                {Array.isArray(selectedOffer?.propiedad?.caracteristicas) && selectedOffer.propiedad.caracteristicas.length > 0 && (
+                    <div className="properties-detail-section properties-detail-section--characteristics">
+                      <p className="properties-eyebrow">Características incluidas</p>
+                      <div className="characteristics-list">
+                        {selectedOffer.propiedad.caracteristicas.map((caracteristica, index) => (
+                            <span key={index} className="characteristic-chip">
+                        {caracteristica}
+                      </span>
+                        ))}
                       </div>
-                      <p>{resena.comentario || 'Sin comentario'}</p>
-                    </article>
-                  ))}
+                    </div>
+                )}
+
+                <div className="property-contact-grid property-contact-grid--offer-summary">
+                  <div className="property-contact-card">
+                    <span>Inmobiliaria</span>
+                    <strong>{selectedOffer?.inmobiliaria?.nombre || '—'}</strong>
+                  </div>
+                  <div className="property-contact-card">
+                    <span>Precio de esta oferta</span>
+                    <strong>{formatCurrency(selectedOffer?.precio)}</strong>
+                  </div>
+                  <div className="property-contact-card">
+                    <span>Estado</span>
+                    <strong>{selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Disponible'}</strong>
+                  </div>
                 </div>
-              ) : (
-                <p className="properties-empty-inline">Todavía no hay reseñas para esta publicación.</p>
-              )}
+              </section>
 
-              <form className="review-form review-form-card" onSubmit={handleReviewSubmit}>
-                <label>
-                  Puntaje (0 a 10)
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={reviewForm.puntaje}
-                    onChange={(e) => setReviewForm((prev) => ({ ...prev, puntaje: e.target.value }))}
-                    className="review-input"
-                  />
-                </label>
+              <section className="property-reviews-card property-surface-card">
+                <div className="property-section-heading">
+                  <div>
+                    <p className="properties-eyebrow">Comentarios y puntaje</p>
+                    <h2 className="properties-section-title">Reseñas de esta oferta</h2>
+                  </div>
+                </div>
 
-                <label>
-                  Comentario
-                  <textarea
-                    value={reviewForm.comentario}
-                    onChange={(e) => setReviewForm((prev) => ({ ...prev, comentario: e.target.value }))}
-                    className="review-textarea"
-                    rows="4"
-                    placeholder="Escribí tu experiencia con esta oferta"
-                  />
-                </label>
+                {resenas.length > 0 ? (
+                    <div className="reviews-list">
+                      {resenas.map((resena) => (
+                          <article key={resena.id} className="review-card">
+                            <div className="review-card-header">
+                              <div className="review-card-author">
+                                <strong>{resena.autorNombre}</strong>
+                                <span className="review-card-rating">⭐ {resena.puntaje}/10</span>
+                              </div>
 
-                <button
-                  type="submit"
-                  className="properties-action-button primary full-width"
-                  disabled={pending.type === 'reseña'}
-                >
-                  {pending.type === 'reseña' ? 'Guardando...' : 'Agregar reseña'}
-                </button>
-              </form>
-            </section>
-          </main>
+                              {Number(resena.autorId) === userId && (
+                                  <button
+                                      type="button"
+                                      className="review-delete-button"
+                                      onClick={() => handleDeleteResena(resena)}
+                                      disabled={pending.type === 'borrar-reseña'}
+                                  >
+                                    {pending.type === 'borrar-reseña' ? 'Borrando...' : 'Borrar'}
+                                  </button>
+                              )}
+                            </div>
+                            <p>{resena.comentario || 'Sin comentario'}</p>
+                          </article>
+                      ))}
+                    </div>
+                ) : (
+                    <p className="properties-empty-inline">Todavía no hay reseñas para esta publicación.</p>
+                )}
 
-          <aside className="property-sidebar">
-            <div className="properties-detail-card property-surface-card property-sidebar-card">
-              <div className="property-sidebar-title">
-                <p className="properties-eyebrow">Oferta seleccionada</p>
-                <h3 className="properties-section-title">{selectedOfferName}</h3>
+                <form className="review-form review-form-card" onSubmit={handleReviewSubmit}>
+                  <label>
+                    Puntaje (0 a 10)
+                    <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={reviewForm.puntaje}
+                        onChange={(e) => setReviewForm((prev) => ({ ...prev, puntaje: e.target.value }))}
+                        className="review-input"
+                    />
+                  </label>
+
+                  <label>
+                    Comentario
+                    <textarea
+                        value={reviewForm.comentario}
+                        onChange={(e) => setReviewForm((prev) => ({ ...prev, comentario: e.target.value }))}
+                        className="review-textarea"
+                        rows="4"
+                        placeholder="Escribí tu experiencia con esta oferta"
+                    />
+                  </label>
+
+                  <button
+                      type="submit"
+                      className="properties-action-button primary full-width"
+                      disabled={pending.type === 'reseña'}
+                  >
+                    {pending.type === 'reseña' ? 'Guardando...' : 'Agregar reseña'}
+                  </button>
+                </form>
+              </section>
+            </main>
+
+            <aside className="property-sidebar">
+              <div className="properties-detail-card property-surface-card property-sidebar-card">
+                <div className="property-sidebar-title">
+                  <p className="properties-eyebrow">Oferta seleccionada</p>
+                  <h3 className="properties-section-title">{selectedOfferName}</h3>
+                </div>
+
+                <div className="property-sidebar-price">{formatCurrency(selectedOffer?.precio)}</div>
+
+                <div className="property-sidebar-meta">
+                  <span>{selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Disponible'}</span>
+                  <span>{selectedOffer?.metadata.esFavorito ? 'En favoritos' : 'Sin favorito'}</span>
+                </div>
+
+                <div className="property-sidebar-actions">
+                  <button
+                      type="button"
+                      className="properties-action-button primary full-width"
+                      onClick={handleComprar}
+                      disabled={selectedOffer?.propiedad?.vendida || pending.type === 'comprar'}
+                  >
+                    {pending.type === 'comprar' ? 'Comprando...' : (selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Comprar')}
+                  </button>
+
+                  <button
+                      type="button"
+                      className="properties-action-button secondary full-width"
+                      onClick={handleToggleFavorito}
+                      disabled={pending.type === 'favorito'}
+                  >
+                    {pending.type === 'favorito' ? 'Actualizando...' : (selectedOffer?.metadata.esFavorito ? 'Quitar favorito' : 'Agregar favorito')}
+                  </button>
+                </div>
+
+                <div className="property-sidebar-note">
+                  La oferta activa determina las fotos, el precio, el contacto y la descripción que ves en pantalla.
+                </div>
               </div>
-
-              <div className="property-sidebar-price">{formatCurrency(selectedOffer?.precio)}</div>
-
-              <div className="property-sidebar-meta">
-                <span>{selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Disponible'}</span>
-                <span>{selectedOffer?.metadata.esFavorito ? 'En favoritos' : 'Sin favorito'}</span>
-              </div>
-
-              <div className="property-sidebar-actions">
-                <button
-                  type="button"
-                  className="properties-action-button primary full-width"
-                  onClick={handleComprar}
-                  disabled={selectedOffer?.propiedad?.vendida || pending.type === 'comprar'}
-                >
-                  {pending.type === 'comprar' ? 'Comprando...' : (selectedOffer?.propiedad?.vendida ? 'Vendida' : 'Comprar')}
-                </button>
-
-                <button
-                  type="button"
-                  className="properties-action-button secondary full-width"
-                  onClick={handleToggleFavorito}
-                  disabled={pending.type === 'favorito'}
-                >
-                  {pending.type === 'favorito' ? 'Actualizando...' : (selectedOffer?.metadata.esFavorito ? 'Quitar favorito' : 'Agregar favorito')}
-                </button>
-              </div>
-
-              <div className="property-sidebar-note">
-                La oferta activa determina las fotos, el precio, el contacto y la descripción que ves en pantalla.
-              </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
+
+        {(error || message) && (
+            <div className="floating-message-overlay">
+              <section className="floating-message-card">
+                {error && <div className="properties-error">{error}</div>}
+                {message && <div className="properties-success">{message}</div>}
+                <button
+                    className="properties-action-button primary"
+                    onClick={() => { setError(''); setMessage(''); }}
+                >
+                  Cerrar
+                </button>
+              </section>
+            </div>
+        )}
       </div>
-    </div>
   );
 }
-
-
-
-
-
-

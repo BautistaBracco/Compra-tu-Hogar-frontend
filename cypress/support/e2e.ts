@@ -13,5 +13,10 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
 import './commands'
+import { slowCypressDown } from 'cypress-slow-down';
+
+// Solo ejecuta la función si es el modo interactivo
+if (Cypress.config('isInteractive')) {
+    slowCypressDown(1000);
+}
