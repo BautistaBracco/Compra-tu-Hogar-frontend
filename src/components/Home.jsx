@@ -11,6 +11,15 @@ const stats = [
 
 const properties = Array.from({ length: 6 }, (_, index) => index + 1);
 
+const propertyImages = [
+  "https://cdn-images.xintelweb.com/upload/0dca46e9f415b88572c88fe812bbdc30.jpg?1782914520",
+  "https://cdn-images.xintelweb.com/upload/13f6e344f4c99b70791d2b199d39a84b.jpg?1774012425",
+  "https://cdn-images.xintelweb.com/upload/2e955fdd85bd3c1de65a37be1647895d.jpg?1774108841",
+  "https://cdn-images.xintelweb.com/upload/9827b2abae1c2430bbe92cc149d11a29.jpg?1780088435",
+  "https://cdn-images.xintelweb.com/upload/036dadd9e2610b0191cd4351b4abe9fd.jpg?236325",
+  "https://cdn-images.xintelweb.com/upload/e5edeec6a4abe71f7b05e7ed8678eec8.jpg?1778685635",
+];
+
 export function Home() {
   const userName = getUserName() || 'Usuario';
   const userRole = getUserRole();
@@ -104,10 +113,14 @@ export function Home() {
       <section className="home-featured">
         <h2 className="home-section-title">Propiedades Destacadas</h2>
         <div className="home-properties-grid">
-          {properties.map((property) => (
-            <div key={property} className="home-property-card">
-              <div className="home-property-image">
-                <div className="home-image-placeholder">{property}</div>
+          {properties.map((property, index) => (
+              <div key={property} className="home-property-card">
+                <div className="home-property-image">
+                  <img
+                      src={propertyImages[index]}
+                      alt={`Propiedad ${property}`}
+                      className="home-property-img-src"
+                  />
                 <div className="home-price-tag">$125,000</div>
               </div>
               <div className="home-property-info">
