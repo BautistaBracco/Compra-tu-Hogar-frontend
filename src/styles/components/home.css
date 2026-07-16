@@ -174,7 +174,7 @@
 
 /* Hero Section */
 .home-hero {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: red;
   color: var(--white);
   padding: 80px var(--spacing-md);
   text-align: center;
